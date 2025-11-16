@@ -2,194 +2,172 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Hello! Helper</title>
 
 <style>
-  /* Reset */
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
 
   body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
     background: transparent;
-    padding: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 100vh;
   }
 
   .card {
-    width: 100%;
-    max-width: 420px;
-    background: rgba(255,255,255,0.3);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    width: 320px;  /* IMPORTANT: small on purpose → prevents blurring */
+    background: rgba(255,255,255,0.42);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border-radius: 18px;
+    padding: 16px;
     border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 22px;
-    padding: 18px 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   }
 
   .title {
-    font-size: 21px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .subtitle {
-    font-size: 13px;
-    opacity: 0.7;
-    margin-bottom: 14px;
+    font-size: 12px;
+    opacity: .65;
+    margin-bottom: 10px;
   }
 
   input {
     width: 100%;
-    padding: 11px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.4);
-    background: rgba(255,255,255,0.55);
-    font-size: 15px;
+    padding: 9px 11px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.85);
+    font-size: 14px;
     outline: none;
-  }
-  input:focus {
-    border-color: #3b82f6;
-    background: rgba(255,255,255,0.9);
   }
 
   .suggestions {
-    margin-top: 10px;
-    margin-bottom: 10px;
     display: flex;
-    gap: 6px;
     flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0;
   }
 
   .chip {
-    padding: 4px 10px;
-    border-radius: 8px;
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 4px 8px;
+    border-radius: 5px;
     font-size: 12px;
-    background: rgba(255,255,255,0.4);
-    border: 1px solid rgba(255,255,255,0.5);
     cursor: pointer;
-    transition: 0.2s;
-  }
-  .chip:hover {
-    background: rgba(255,255,255,0.6);
   }
 
   .result {
-    margin-top: 10px;
-    padding: 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.5);
-  }
-  .result-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  .result-desc {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.75);
     font-size: 13px;
-    opacity: 0.8;
-    margin-bottom: 6px;
-  }
-  .result a {
-    font-size: 13px;
-    color: #2563e9;
-    text-decoration: none;
-    word-break: break-all;
   }
 
+  .result-desc {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  a { color:#2563eb; text-decoration:none; }
+
   .empty {
-    font-size: 13px;
-    opacity: 0.6;
-    padding-top: 10px;
+    font-size: 12px;
+    opacity: .6;
+    margin-top: 8px;
   }
 </style>
 </head>
 
 <body>
 <div class="card">
-
   <div class="title">Hello! Helper</div>
-  <div class="subtitle">Find what you need—fast.</div>
+  <div class="subtitle">Find answers quickly.</div>
 
-  <input id="query" placeholder="Search…" autocomplete="off" />
+  <input id="query" placeholder="Search…" autocomplete="off"/>
 
-  <!-- Quick search shortcuts -->
   <div class="suggestions">
     <div class="chip" data-q="public link">Public Link</div>
     <div class="chip" data-q="embed card">Embed Card</div>
-    <div class="chip" data-q="filter requests">Filter Requests</div>
+    <div class="chip" data-q="filter">Filter Requests</div>
   </div>
 
   <div id="results" class="empty">Start typing or tap a suggestion.</div>
 </div>
 
 <script>
-// ------- Your existing knowledge base (same structure as before) -------
 const knowledgeIndex = [
   {
-    title: "Create a username and public profile link",
-    description: "Generate your personal Hello! URL and make it shareable.",
-    url: "https://example.com/help/create-username",
-    tags: ["username", "public", "link", "profile"]
-  },
-  {
-    title: "How LinkUp filters connection requests",
-    description: "Learn how Hello! prevents spam and low-quality requests.",
-    url: "https://example.com/help/linkup-rules",
-    tags: ["linkup", "filter", "requests", "spam"]
+    title: "Create a public link",
+    url: "#",
+    desc: "Generate the shareable Hello! link for your profile.",
+    tags: ["public", "link", "profile", "url"]
   },
   {
     title: "Embed your Signature Card",
-    description: "Add it to your website or blog using iframe or HTML snippet.",
-    url: "https://example.com/help/embed-card",
-    tags: ["embed", "iframe", "website", "install"]
+    url: "#",
+    desc: "Add your card to any website using iframe or HTML.",
+    tags: ["embed", "iframe", "html", "card"]
+  },
+  {
+    title: "Filter LinkUp requests",
+    url: "#",
+    desc: "Learn how the system blocks spam and low-quality requests.",
+    tags: ["filter", "linkup", "requests", "spam"]
   }
 ];
 
-// ------- Fuzzy scoring from previous version (kept, but compact) -------
-function tokenize(txt) { return txt.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); }
-function score(entry, q) {
-  const qTokens = tokenize(q);
-  const allTokens = tokenize(entry.title + " " + entry.description + " " + entry.tags.join(" "));
-  return qTokens.reduce((s, t) => s + (allTokens.includes(t) ? 3 : 0), 0);
+function tokenize(t){ return t.toLowerCase().split(/\W+/).filter(Boolean); }
+
+function score(entry,q){
+  const qT = tokenize(q);
+  const eTokens = tokenize(entry.title + " " + entry.desc + " " + entry.tags.join(" "));
+  return qT.reduce((s,t)=>s+(eTokens.includes(t)?3:0),0);
 }
-function search(q) {
+
+function search(q){
   return knowledgeIndex
-    .map(e => ({ ...e, score: score(e, q) }))
-    .filter(e => e.score > 0)
+    .map(e=>({...e,score:score(e,q)}))
+    .filter(e=>e.score>0)
     .sort((a,b)=>b.score-a.score);
 }
 
-// ------- Search UI behavior -------
 const input = document.getElementById("query");
 const results = document.getElementById("results");
 
-function render(list) {
-  if (!list.length) return results.innerHTML = `<div class="empty">No results found.</div>`;
-  results.innerHTML = list.map(r => `
-    <div class="result">
-      <div class="result-title">${r.title}</div>
-      <div class="result-desc">${r.description}</div>
-      <a href="${r.url}" target="_blank">🔗 ${r.url}</a>
-    </div>
-  `).join("");
-}
-
 input.addEventListener("input", () => {
   const q = input.value.trim();
-  if (!q) return results.innerHTML = `<div class="empty">Start typing or tap a suggestion.</div>`;
-  render(search(q));
+  if (!q) return results.innerHTML = '<div class="empty">Start typing…</div>';
+  const r = search(q);
+  if (!r.length) return results.innerHTML = '<div class="empty">No results.</div>';
+
+  results.innerHTML = r.map(e => `
+    <div class="result">
+      <strong>${e.title}</strong><br>
+      <div class="result-desc">${e.desc}</div>
+      <a href="${e.url}" target="_blank">Open</a>
+    </div>
+  `).join("");
 });
 
-// ------- Tap-to-search chips -------
 document.querySelectorAll(".chip").forEach(chip => {
   chip.addEventListener("click", () => {
     const q = chip.dataset.q;
     input.value = q;
-    render(search(q));
+    input.dispatchEvent(new Event("input"));
   });
 });
 </script>
