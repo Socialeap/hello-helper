@@ -37,13 +37,37 @@
 
   .title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
   .subtitle { font-size: 12px; opacity:.65; margin-bottom: 10px; }
-  input { width: 100%; padding: 9px 11px; border-radius: 8px; font-size:14px; border:1px solid rgba(0,0,0,0.15); }
+  input {
+    width: 100%;
+    padding: 9px 11px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.85);
+    font-size: 14px;
+    outline: none;
+  }
 
   .suggestions { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
-  .chip { font-size:10px; padding:5px 8px; border-radius:5px; cursor:pointer; background:rgba(255,255,255,.65); border:1px solid rgba(0,0,0,.1); }
+  .chip {
+    font-size:10px;
+    padding:5px 8px;
+    border-radius:5px;
+    cursor:pointer;
+    background:rgba(255,255,255,.65);
+    border:1px solid rgba(0,0,0,.1);
+  }
 
-  .result { margin-top:8px; padding:10px; border-radius:9px; border:1px solid rgba(0,0,0,.1); background:rgba(255,255,255,.75); font-size:12px; }
+  .result {
+    margin-top:8px;
+    padding:10px;
+    border-radius:9px;
+    border:1px solid rgba(0,0,0,.1);
+    background:rgba(255,255,255,.75);
+    font-size:12px;
+  }
   .result-desc { font-size:11px; opacity:.8; }
+  .result-meta { font-size:10px; opacity:.6; margin-top:4px; }
+
   a { color:#2563eb; text-decoration:none; font-size:11px; }
 
   .empty { font-size:11px; opacity:.6; margin-top:8px; }
@@ -57,13 +81,14 @@
     left: 16px;
     padding: 8px 14px;
     font-size: 13px;
-    background: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.9);
     border-radius: 999px;
     border: 1px solid rgba(0,0,0,0.2);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     cursor: pointer;
     display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   }
 
   /* ===========================
@@ -85,14 +110,14 @@
 <!-- Full Helper UI -->
 <div id="helper">
   <div class="title">Hello! Helper</div>
-  <div class="subtitle">Find answers quickly.</div>
+  <div class="subtitle" id="statusText">Find answers quickly.</div>
 
   <input id="query" placeholder="Search…" autocomplete="off"/>
 
   <div class="suggestions">
     <div class="chip" data-q="public link">Public Link</div>
     <div class="chip" data-q="embed card">Embed Card</div>
-    <div class="chip" data-q="filter requests">Filter Requests</div>
+    <div class="chip" data-q="filter spam">Filter Requests</div>
   </div>
 
   <div id="results" class="empty">Start typing or tap a suggestion.</div>
@@ -104,48 +129,140 @@
 <!-- Embeddable Content Viewer -->
 <iframe id="viewer"></iframe>
 
+<!-- Transformers.js for local embeddings -->
+<script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
 <script>
 // ====================================
-// Knowledge Data
+// Knowledge Data (edit URLs & text)
 // ====================================
 const knowledgeIndex = [
   {
     title: "Create a public link",
-    url: "https://view.genial.ly/65f825d...example", // replace with real Genially URL
-    desc: "Generate the shareable Hello! link for your profile.",
-    tags: ["public","link","profile","url"]
+    url: "https://view.genial.ly/EXAMPLE_1", // replace with real Genially URL
+    desc: "Generate the shareable Hello! link for your profile and control visibility.",
+    tags: ["public","link","profile","url","share","visibility"]
   },
   {
     title: "Embed your Signature Card",
-    url: "https://view.genial.ly/65f826a...example",
-    desc: "Add your card to any website using iframe or HTML.",
-    tags: ["embed","iframe","html","card"]
+    url: "https://view.genial.ly/EXAMPLE_2",
+    desc: "Add your Signature Card to a website or portfolio using iframe or HTML.",
+    tags: ["embed","iframe","html","card","website","install","publish"]
   },
   {
     title: "Filter LinkUp requests",
-    url: "https://view.genial.ly/65f82de...example",
-    desc: "Learn how the system blocks spam and low-quality requests.",
-    tags: ["filter","linkup","requests","spam"]
+    url: "https://view.genial.ly/EXAMPLE_3",
+    desc: "Learn how Hello! filters spam, cold pitches, and low-intent connection requests.",
+    tags: ["filter","linkup","requests","spam","noise","connections"]
   }
 ];
 
 // ====================================
-// Search Engine
+// Fallback Keyword Search (backup)
 // ====================================
 function tokenize(t){ return t.toLowerCase().split(/\W+/).filter(Boolean); }
-function score(entry,q){
+
+function keywordScore(entry,q){
   const qT = tokenize(q);
-  const eT = tokenize(entry.title+" "+entry.desc+" "+entry.tags.join(" "));
+  const eT = tokenize(entry.title + " " + entry.desc + " " + entry.tags.join(" "));
   return qT.reduce((s,t)=>s+(eT.includes(t)?3:0),0);
 }
-function search(q){
-  return knowledgeIndex.map(e=>({...e,score:score(e,q)}))
-    .filter(e=>e.score>0)
-    .sort((a,b)=>b.score-a.score);
+
+function keywordSearch(q){
+  return knowledgeIndex
+    .map(e => ({ ...e, score: keywordScore(e,q) }))
+    .filter(e => e.score > 0)
+    .sort((a,b)=>b.score - a.score);
 }
 
 // ====================================
-// UI
+// Local Embeddings with transformers.js
+// ====================================
+let embedder = null;
+let entryEmbeddings = null;
+let modelReady = false;
+
+const statusText = document.getElementById("statusText");
+
+async function initEmbeddings() {
+  try {
+    statusText.textContent = "Loading AI search…";
+    const { pipeline } = window.transformers;
+    embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+
+    // Precompute embeddings for each entry (title + desc + tags)
+    entryEmbeddings = [];
+    for (const entry of knowledgeIndex) {
+      const text = `${entry.title}. ${entry.desc}. ${entry.tags.join(" ")}`;
+      const output = await embedder(text, { pooling: "mean", normalize: true });
+      entryEmbeddings.push(Array.from(output.data));
+    }
+
+    modelReady = true;
+    statusText.textContent = "Find answers quickly.";
+  } catch (err) {
+    console.error("Error loading embeddings:", err);
+    statusText.textContent = "Search (AI fallback to keyword-only).";
+    modelReady = false;
+  }
+}
+
+function cosineSimilarity(a, b) {
+  let s = 0;
+  for (let i=0; i<a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+async function semanticSearch(q) {
+  if (!modelReady || !embedder || !entryEmbeddings) {
+    return [];
+  }
+
+  const output = await embedder(q, { pooling: "mean", normalize: true });
+  const qVec = Array.from(output.data);
+
+  const scored = knowledgeIndex.map((entry, idx) => ({
+    entry,
+    score: cosineSimilarity(qVec, entryEmbeddings[idx])
+  }));
+
+  // Threshold to ignore noise; tweak as needed
+  const MIN_SCORE = 0.25;
+
+  return scored
+    .filter(x => x.score >= MIN_SCORE)
+    .sort((a,b)=>b.score - a.score)
+    .map(x => ({
+      ...x.entry,
+      semanticScore: x.score
+    }));
+}
+
+// Combined smart search: semantic → keyword fallback
+async function smartSearch(q) {
+  q = q.trim();
+  if (!q) return [];
+
+  // 1) Try semantic if ready
+  let semanticResults = [];
+  if (modelReady) {
+    try {
+      semanticResults = await semanticSearch(q);
+    } catch (e) {
+      console.warn("Semantic search failed, falling back:", e);
+    }
+  }
+
+  if (semanticResults.length) {
+    return semanticResults;
+  }
+
+  // 2) Fallback to keyword search
+  const keywordResults = keywordSearch(q);
+  return keywordResults;
+}
+
+// ====================================
+// UI: Viewer + Helper + Pill
 // ====================================
 const helper = document.getElementById("helper");
 const pill = document.getElementById("pill");
@@ -162,38 +279,59 @@ function openContent(url) {
 
 function showHelper() {
   viewer.style.display = "none";
+  viewer.src = "";
   helper.style.display = "block";
   pill.style.display = "none";
-  viewer.src = "";
 }
 
 pill.onclick = showHelper;
 
-// Search input
-input.addEventListener("input", () => {
-  const q = input.value.trim();
-  if (!q) return results.innerHTML = '<div class="empty">Start typing…</div>';
-  const r = search(q);
-  if (!r.length) return results.innerHTML = '<div class="empty">No results.</div>';
+// Render function
+function renderResults(list) {
+  if (!list.length) {
+    results.innerHTML = '<div class="empty">No results.</div>';
+    return;
+  }
 
-  results.innerHTML = r.map(e => `
+  results.innerHTML = list.map(e => `
     <div class="result">
       <strong>${e.title}</strong><br>
       <span class="result-desc">${e.desc}</span><br>
+      <div class="result-meta">
+        ${e.semanticScore ? `AI match score: ${(e.semanticScore*100).toFixed(0)}%` : "Keyword match"}
+      </div>
       <a href="#" data-url="${e.url}">Open</a>
     </div>
   `).join("");
 
-  // Attach click handlers
+  // Attach click handlers for "Open" links
   document.querySelectorAll(".result a").forEach(link => {
     link.addEventListener("click", ev => {
       ev.preventDefault();
       openContent(ev.target.dataset.url);
     });
   });
+}
+
+// Debounced input handler
+let searchTimer = null;
+input.addEventListener("input", () => {
+  const q = input.value.trim();
+  if (searchTimer) clearTimeout(searchTimer);
+
+  if (!q) {
+    results.innerHTML = '<div class="empty">Start typing or tap a suggestion.</div>';
+    return;
+  }
+
+  searchTimer = setTimeout(async () => {
+    results.innerHTML = '<div class="empty">Searching…</div>';
+    const res = await smartSearch(q);
+    renderResults(res);
+  }, 150);
 });
 
-// Chips
+// Chips (quick search)
 document.querySelectorAll(".chip").forEach(chip => {
   chip.addEventListener("click", () => {
     const q = chip.dataset.q;
@@ -201,6 +339,9 @@ document.querySelectorAll(".chip").forEach(chip => {
     input.dispatchEvent(new Event("input"));
   });
 });
+
+// Initialize embeddings in the background
+initEmbeddings();
 </script>
 </body>
 </html>
