@@ -1,13 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Hello Helper AI</title>
+<title>Hello! Helper AI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     margin: 0;
-    font-family: system-ui, sans-serif;
-    background: #f7f7f7;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    background: radial-gradient(circle at top left, #fdf2ff 0, #f5fbff 40%, #e0ecff 80%);
     overflow: hidden;
   }
 
@@ -15,86 +20,161 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    background: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 
-  /* Full helper panel */
+  /* Frosty glass helper card */
   #helper {
-    width: 350px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 360px;
     max-width: 90vw;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 16px;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
-    transition: opacity 0.3s, transform 0.3s;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 24px;
+    padding: 18px 18px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    color: #111827;
     z-index: 10;
   }
+
   #helper.hidden {
     display: none;
   }
 
-  h1 {
-    margin: 0 0 10px;
-    font-size: 18px;
+  .title {
+    font-size: 20px;
+    font-weight: 650;
+    margin-bottom: 6px;
   }
 
-  input {
+  .subtitle {
+    font-size: 13px;
+    opacity: 0.75;
+    margin-bottom: 12px;
+  }
+
+  #search {
     width: 100%;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
     font-size: 14px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    outline: none;
+  }
+
+  #search:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 8px;
+  }
+
+  .chip {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    background: rgba(239, 246, 255, 0.95);
+  }
+
+  #results {
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 4px;
   }
 
   .result {
-    padding: 10px;
-    background: white;
-    border-radius: 10px;
+    padding: 9px 10px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
     margin-bottom: 6px;
     cursor: pointer;
-    border: 1px solid #eee;
-    transition: background 0.15s;
-  }
-  .result:hover {
-    background: #f2f6ff;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    transition: background 0.15s, transform 0.08s;
   }
 
-  /* Full page content viewer */
+  .result:hover {
+    background: #eff6ff;
+    transform: translateY(-1px);
+  }
+
+  .result-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .result-desc {
+    font-size: 12px;
+    opacity: 0.82;
+  }
+
+  .empty {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 6px;
+  }
+
+  #status {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 6px;
+  }
+
+  /* Fullscreen content viewer */
   #viewer {
     display: none;
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     border: none;
-    background: white;
+    background: #ffffff;
     z-index: 1;
   }
+
   #viewer.visible {
     display: block;
   }
 
-  /* Floating pill button */
+  /* Floating pill (upper-right) */
   #pill {
     position: fixed;
     top: 14px;
     right: 14px;
-    background: rgba(0,0,0,0.75);
-    color: white;
-    padding: 10px 14px;
-    border-radius: 40px;
-    font-size: 14px;
+    background: rgba(15, 23, 42, 0.88);
+    color: #f9fafb;
+    padding: 9px 13px;
+    border-radius: 999px;
+    font-size: 13px;
     cursor: pointer;
     display: none;
-    backdrop-filter: blur(10px);
-    z-index: 999999; /* Always on top */
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.45);
+    z-index: 9999;
   }
+
   #pill.visible {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 </style>
 </head>
@@ -102,150 +182,224 @@
 <body>
 <div id="app">
   <div id="helper">
-    <h1>Need Help?</h1>
-    <input id="search" placeholder="Type what you're trying to do..." autocomplete="off" />
-    <div id="results"></div>
-    <div id="status" style="opacity:0.6; font-size:12px; margin-top:8px;"></div>
+    <div class="title">Hello! Helper</div>
+    <div class="subtitle">Type what you’re trying to do or tap a suggestion.</div>
+
+    <input id="search" placeholder="Search for help, features, or topics…" autocomplete="off" />
+
+    <div class="chips">
+      <div class="chip" data-q="public link">Public link</div>
+      <div class="chip" data-q="embed card">Embed card</div>
+      <div class="chip" data-q="filter spam requests">Filter requests</div>
+    </div>
+
+    <div id="results" class="empty">Start typing or tap a suggestion.</div>
+    <div id="status"></div>
   </div>
 
   <iframe id="viewer"></iframe>
-  <div id="pill">Help ▸</div>
+  <div id="pill">🔍 Search</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
 <script>
+  const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
 
-// ============ CONFIG ==================
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
+  let knowledgeIndex = [];
+  let embeddedEntries = []; // { item, vector }
+  let embedder = null;
+  let engineReady = false;
+  let indexLoaded = false;
 
-let knowledgeIndex = [];
-let embeddings = [];
-let embedder = null;
-let engineReady = false;
+  const searchInput = document.getElementById("search");
+  const resultsDiv = document.getElementById("results");
+  const viewer = document.getElementById("viewer");
+  const helper = document.getElementById("helper");
+  const pill = document.getElementById("pill");
+  const statusEl = document.getElementById("status");
 
-// ============ LOAD SHEET CSV ==================
-async function loadKnowledgeIndex() {
-  const res = await fetch(SHEET_URL);
-  const csv = await res.text();
-  const rows = csv.trim().split("\n");
-  const headers = rows.shift().split(",");
+  // ---------- Data loading ----------
+  async function loadKnowledgeIndex() {
+    const res = await fetch(SHEET_URL);
+    const csv = await res.text();
+    const rows = csv.trim().split("\n");
+    const headers = rows.shift().split(",");
 
-  knowledgeIndex = rows.map(row => {
-    const values = row.split(",");
-    const entry = {};
-    headers.forEach((h, i) => entry[h.trim().toLowerCase()] = values[i]?.trim() || "");
+    knowledgeIndex = rows.map(row => {
+      const values = row.split(",");
+      const entry = {};
+      headers.forEach((h, i) => entry[h.trim().toLowerCase()] = (values[i] || "").trim());
 
-    return {
-      title: entry["title"],
-      url: entry["url"],
-      desc: entry["description"] || "",
-      tags: entry["tags"] ? entry["tags"].split(",").map(t => t.trim()) : [],
-      notes: entry["notes"] || ""
-    };
-  });
-}
+      return {
+        title: entry["title"] || "",
+        url: entry["url"] || "",
+        desc: entry["description"] || "",
+        tags: entry["tags"] ? entry["tags"].split(",").map(t => t.trim()) : [],
+        notes: entry["notes"] || ""
+      };
+    });
+    indexLoaded = true;
+  }
 
-// ============ SEMANTIC ENGINE ==================
-async function loadEmbeddingEngine() {
-  const pipeline = await window.transformers.pipeline(
-    "feature-extraction",
-    "Xenova/all-MiniLM-L6-v2"
-  );
-  embedder = pipeline;
+  async function loadEmbeddingEngine() {
+    const { pipeline } = window.transformers;
+    embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
 
-  for (let item of knowledgeIndex) {
-    let vec = await embedder(item.title + " " + item.desc + " " + item.tags.join(" "));
-    embeddings.push({
-      ...item,
-      vector: vec.data[0]
+    embeddedEntries = [];
+    for (const item of knowledgeIndex) {
+      const text = `${item.title}. ${item.desc}. ${item.tags.join(" ")}`;
+      const output = await embedder(text, { pooling: "mean", normalize: true });
+      embeddedEntries.push({
+        item,
+        vector: Array.from(output.data)
+      });
+    }
+    engineReady = true;
+  }
+
+  function cosineSimilarity(a, b) {
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+    return dot / (Math.sqrt(na) * Math.sqrt(nb) || 1);
+  }
+
+  // ---------- Search engines ----------
+  function keywordSearch(query) {
+    const q = query.toLowerCase();
+    return knowledgeIndex
+      .map(item => {
+        const haystack = (item.title + " " + item.desc + " " + item.tags.join(" ")).toLowerCase();
+        const score = haystack.includes(q) ? 1 : 0;
+        return { item, score };
+      })
+      .filter(r => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(r => r.item);
+  }
+
+  async function semanticSearch(query) {
+    if (!engineReady || !embedder || embeddedEntries.length === 0) {
+      return keywordSearch(query);
+    }
+
+    const output = await embedder(query, { pooling: "mean", normalize: true });
+    const qVec = Array.from(output.data);
+
+    const MIN_SCORE = 0.35;
+    const ranked = embeddedEntries
+      .map(e => ({
+        item: e.item,
+        score: cosineSimilarity(qVec, e.vector)
+      }))
+      .filter(r => r.score >= MIN_SCORE)
+      .sort((a, b) => b.score - a.score)
+      .map(r => r.item);
+
+    if (ranked.length > 0) return ranked;
+
+    // fallback if semantic gives nothing strong
+    return keywordSearch(query);
+  }
+
+  async function smartSearch(query) {
+    if (!indexLoaded) return [];
+    if (!query || query.trim().length < 2) return [];
+    try {
+      if (engineReady) {
+        return await semanticSearch(query);
+      } else {
+        return keywordSearch(query);
+      }
+    } catch (e) {
+      console.warn("Search error, falling back to keyword:", e);
+      return keywordSearch(query);
+    }
+  }
+
+  // ---------- UI helpers ----------
+  function showContent(url) {
+    if (!url) return;
+    viewer.src = url;
+    viewer.classList.add("visible");
+    helper.classList.add("hidden");
+    pill.classList.add("visible");
+  }
+
+  function showHelper() {
+    viewer.classList.remove("visible");
+    viewer.src = "";
+    helper.classList.remove("hidden");
+    pill.classList.remove("visible");
+  }
+
+  function renderResults(list) {
+    if (!list || list.length === 0) {
+      resultsDiv.innerHTML = '<div class="empty">No results. Try another phrase.</div>';
+      return;
+    }
+    resultsDiv.innerHTML = list
+      .map(item => `
+        <div class="result" data-url="${item.url}">
+          <div class="result-title">${item.title || "Untitled"}</div>
+          <div class="result-desc">${item.desc || ""}</div>
+        </div>
+      `)
+      .join("");
+
+    document.querySelectorAll(".result").forEach(el => {
+      el.addEventListener("click", () => {
+        const url = el.getAttribute("data-url");
+        showContent(url);
+      });
     });
   }
 
-  engineReady = true;
-  document.getElementById("status").innerText = "AI search ready ✔";
-}
+  // ---------- Events ----------
+  searchInput.addEventListener("input", async () => {
+    const q = searchInput.value.trim();
+    if (!q) {
+      resultsDiv.className = "empty";
+      resultsDiv.innerHTML = "Start typing or tap a suggestion.";
+      return;
+    }
 
-function cosineSimilarity(a, b) {
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
-  }
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
-}
+    resultsDiv.className = "";
+    resultsDiv.innerHTML = '<div class="empty">Searching…</div>';
 
-async function semanticSearch(query) {
-  if (!engineReady) return keywordSearch(query);
-  let qv = await embedder(query);
-  qv = qv.data[0];
-
-  return embeddings
-    .map(x => ({
-      ...x,
-      score: cosineSimilarity(qv, x.vector)
-    }))
-    .sort((a,b)=>b.score-a.score);
-}
-
-function keywordSearch(query) {
-  return knowledgeIndex
-    .map(x => ({
-      ...x,
-      score: x.title.toLowerCase().includes(query.toLowerCase()) ? 1 : 0
-    }))
-    .sort((a,b)=>b.score-a.score);
-}
-
-// ============ UI INTERACTION ==================
-const searchInput = document.getElementById("search");
-const resultsDiv = document.getElementById("results");
-const viewer = document.getElementById("viewer");
-const helper = document.getElementById("helper");
-const pill = document.getElementById("pill");
-
-searchInput.addEventListener("input", async () => {
-  const q = searchInput.value.trim();
-  if (!q) {
-    resultsDiv.innerHTML = "";
-    return;
-  }
-
-  const results = await semanticSearch(q);
-  resultsDiv.innerHTML = results.map(r => `
-    <div class="result" data-url="${r.url}">
-      <strong>${r.title}</strong><br>
-      <span>${r.desc}</span>
-    </div>
-  `).join("");
-
-  document.querySelectorAll(".result").forEach(el => {
-    el.addEventListener("click", () => showContent(el.dataset.url));
+    const res = await smartSearch(q);
+    renderResults(res);
   });
-});
 
-function showContent(url) {
-  viewer.src = url;
-  viewer.classList.add("visible");
-  helper.classList.add("hidden");
-  pill.classList.add("visible");
-}
+  document.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const q = chip.getAttribute("data-q");
+      searchInput.value = q;
+      searchInput.dispatchEvent(new Event("input"));
+    });
+  });
 
-pill.addEventListener("click", () => {
-  viewer.classList.remove("visible");
-  helper.classList.remove("hidden");
-  pill.classList.remove("visible");
-  viewer.src = "";
-});
+  pill.addEventListener("click", showHelper);
 
-// ============ INITIALIZE ==================
-(async function init() {
-  document.getElementById("status").innerText = "Loading help index...";
-  await loadKnowledgeIndex();
-  document.getElementById("status").innerText = "Loading AI model...";
-  await loadEmbeddingEngine();
-})();
+  // ---------- Initialization ----------
+  (async function init() {
+    try {
+      statusEl.textContent = "Loading help topics…";
+      await loadKnowledgeIndex();
+
+      statusEl.textContent = "Loading AI model…";
+      await loadEmbeddingEngine();
+
+      statusEl.textContent = "AI semantic search ready ✔";
+    } catch (e) {
+      console.error("Initialization error:", e);
+      engineReady = false;
+      statusEl.textContent = "Using basic keyword search (AI model unavailable).";
+    }
+  })();
 </script>
-
 </body>
 </html>
