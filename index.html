@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hello! Semantic Search</title>
+
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    padding: 20px;
+    background: #f8f9fb;
+  }
+  .search-box {
+    max-width: 520px;
+    margin: auto;
+  }
+  input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  .result {
+    margin-top: 14px;
+    padding: 12px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #eee;
+  }
+  a {
+    color: #0077ff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>
+
+<!-- IMPORTANT: Tiny in-browser transformer -->
+<script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
+</head>
+<body>
+
+<div class="search-box">
+  <input id="query" placeholder="Search help, features, or topics…" />
+  <div id="results"></div>
+</div>
+
+<script>
+// ===============================================================
+// STEP 1: PRECOMPUTED EMBEDDINGS INDEX  (replace later in Option B)
+// ===============================================================
+const knowledgeIndex = [
+  {
+    text: "How to create a username and public profile link",
+    url: "https://example.com/help/create-username",
+    embedding: [0.11,-0.23,0.48,-0.19,0.02]
+  },
+  {
+    text: "How the LinkUp request system filters incoming contacts",
+    url: "https://example.com/help/linkup-rules",
+    embedding: [-0.04,0.44,-0.25,0.32,0.07]
+  },
+  {
+    text: "How to embed a Signature Card or install it on a website",
+    url: "https://example.com/help/embed-card",
+    embedding: [0.19,-0.05,0.38,-0.12,-0.14]
+  }
+];
+
+// ===============================================================
+// STEP 2: Load lightweight tiny embedding model locally in browser
+// ===============================================================
+let embedder = null;
+(async () => {
+  console.log("Loading model…");
+  embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+  console.log("Model loaded ✔");
+})();
+
+// ===============================================================
+// STEP 3: Cosine Similarity
+// ===============================================================
+function cosineSimilarity(a,b) {
+  return a.reduce((s,v,i)=>s+v*b[i],0);
+}
+
+// ===============================================================
+// STEP 4: Semantic search
+// ===============================================================
+async function semanticSearch(query) {
+  if (!embedder) return [];
+
+  const output = await embedder(query, { pooling:"mean", normalize:true });
+  const vector = Array.from(output.data);
+
+  return knowledgeIndex
+    .map(x => ({
+      ...x,
+      score: cosineSimilarity(vector, x.embedding)
+    }))
+    .sort((a,b)=>b.score-a.score)
+    .filter(x => x.score > 0.2);
+}
+
+// ===============================================================
+// STEP 5: UI Binding
+// ===============================================================
+document.getElementById("query").addEventListener("input", async e => {
+  const q = e.target.value.trim();
+  const results = document.getElementById("results");
+  if (!q) return (results.innerHTML = "");
+
+  results.innerHTML = `<div style="opacity:.6;">Searching…</div>`;
+
+  const matches = await semanticSearch(q);
+
+  if (!matches.length) {
+    results.innerHTML = `<div style="opacity:.6;">No results found</div>`;
+    return;
+  }
+
+  results.innerHTML = matches
+    .map(m => `
+      <div class="result">
+        <a href="${m.url}" target="_blank">🔗 ${m.text}</a>
+      </div>
+    `).join("");
+});
+</script>
+
+</body>
+</html>
