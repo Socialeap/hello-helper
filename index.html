@@ -590,25 +590,108 @@ function showAnalyticsModal() {
   const modal = document.createElement("div");
   modal.className = "helper-analytics-modal";
 
-  const pretty = JSON.stringify(analytics, null, 2);
+  // ---- Stats Processing ----
+  const searches = analytics.searches || [];
+  const clicks = analytics.clicks || [];
+  const sessions = analytics.sessions || 0;
+
+  function countBy(key, list) {
+    const map = new Map();
+    list.forEach(item => {
+      const value = item[key];
+      if (!value) return;
+      map.set(value, (map.get(value) || 0) + 1);
+    });
+    return [...map.entries()].sort((a,b) => b[1] - a[1]);
+  }
+
+  const topSearches = countBy("q", searches);
+  const topClicks = countBy("url", clicks);
+
+  function groupByDay(list) {
+    const map = new Map();
+    list.forEach(e => {
+      const d = new Date(e.ts).toISOString().slice(0, 10);
+      map.set(d, (map.get(d) || 0) + 1);
+    });
+    return [...map.entries()].sort((a,b)=>a[0]>b[0]?1:-1);
+  }
+
+  const searchesByDay = groupByDay(searches);
+  const clicksByDay = groupByDay(clicks);
+
+  function table(data, headers) {
+    return `
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin:6px 0;">
+        <thead>
+          <tr>${headers.map(h => `<th style="text-align:left; padding:4px 0;">${h}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${data.map(row => `
+            <tr>${row.map(cell => `<td style="padding:2px 0;">${cell}</td>`).join("")}</tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  const statsHTML = `
+    <h3>📊 Hello! Helper Usage Insights</h3>
+
+    <strong>Total Sessions:</strong> ${sessions}<br><br>
+
+    <strong>Top Searches</strong>
+    ${table(topSearches.map(([q,count])=>[q,count]), ["Query","Count"])}
+
+    <strong>Top Clicked Pages</strong>
+    ${table(topClicks.map(([url,count])=>[url,count]), ["URL","Clicks"])}
+
+    <strong>Searches by Day</strong>
+    ${table(searchesByDay, ["Date","Searches"])}
+
+    <strong>Clicks by Day</strong>
+    ${table(clicksByDay, ["Date","Clicks"])}
+  `;
+
+  const tabsHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:6px;">
+      <button id="tabStats" class="primary">Stats</button>
+      <button id="tabRaw">Raw JSON</button>
+    </div>
+    <div id="analyticsContent"></div>
+  `;
 
   modal.innerHTML = `
-    <h3>Hello! Helper Analytics</h3>
-    <pre>${pretty}</pre>
+    ${tabsHTML}
     <div class="buttons">
-      <button class="primary" id="copyAnalytics">Copy JSON</button>
       <button id="closeAnalytics">Close</button>
     </div>
   `;
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
+  const contentEl = modal.querySelector("#analyticsContent");
+
+  function showStats() {
+    contentEl.innerHTML = statsHTML;
+  }
+
+  function showJSON() {
+    const pretty = JSON.stringify(analytics, null, 2);
+    contentEl.innerHTML = `<pre>${pretty}</pre>
+      <button class="primary" id="copyAnalytics">Copy JSON</button>`;
+    document.getElementById("copyAnalytics").onclick = () => {
+      navigator.clipboard.writeText(pretty);
+      alert("Analytics JSON copied");
+    };
+  }
+
+  document.getElementById("tabStats").onclick = showStats;
+  document.getElementById("tabRaw").onclick = showJSON;
+
   document.getElementById("closeAnalytics").onclick = () => overlay.remove();
-  document.getElementById("copyAnalytics").onclick = () => {
-    navigator.clipboard.writeText(pretty).then(() => {
-      alert("Analytics JSON copied to clipboard.");
-    });
-  };
+
+  // Default tab:
+  showStats();
 }
 
 /* ===================================================
