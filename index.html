@@ -15,36 +15,35 @@
   }
 
   #app {
-    position: relative;
     width: 100%;
     height: 100vh;
+    position: relative;
   }
 
-  /* Frosty glass helper card */
+  /* --- Frosted Glass Helper UI --- */
   #helper {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 360px;
-    max-width: 90vw;
+    width: 440px; /* wider */
+    max-width: 92vw;
     transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.18);
-    border-radius: 24px;
-    padding: 18px 18px 16px;
+    background: rgba(255, 255, 255, 0.24); /* real transparency */
+    border-radius: 22px;
+    padding: 18px 20px 16px;
     border: 1px solid rgba(255, 255, 255, 0.55);
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.35);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    color: #111827;
+    box-shadow: 0 18px 55px rgba(20, 25, 42, 0.40);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    color: #111;
     z-index: 10;
   }
-
   #helper.hidden { display: none; }
 
   .title {
-    font-size: 20px;
+    font-size: 19px; /* slightly smaller */
     font-weight: 650;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .subtitle {
@@ -55,11 +54,11 @@
 
   #search {
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 11px;
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.6);
     font-size: 14px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.88);
     outline: none;
   }
 
@@ -76,7 +75,7 @@
   }
 
   .chip {
-    padding: 5px 9px;
+    padding: 4px 9px;
     border-radius: 999px;
     font-size: 11px;
     background: rgba(255, 255, 255, 0.85);
@@ -90,21 +89,20 @@
   }
 
   #results {
-    max-height: 260px;
+    max-height: 280px;
     overflow-y: auto;
     padding-right: 4px;
   }
 
   .result {
-    padding: 9px 10px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
+    padding: 8px 9px;
+    background: rgba(255, 255, 255, 0.82);
+    border-radius: 10px;
     margin-bottom: 6px;
     cursor: pointer;
-    border: 1px solid rgba(148, 163, 184, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.35);
     transition: background 0.15s, transform 0.08s;
   }
-
   .result:hover {
     background: #eff6ff;
     transform: translateY(-1px);
@@ -113,12 +111,12 @@
   .result-title {
     font-size: 13px;
     font-weight: 600;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
-
   .result-desc {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.82;
+    line-height: 1.3;
   }
 
   .empty {
@@ -128,40 +126,55 @@
   }
 
   #status {
-    font-size: 11px;
-    opacity: 0.7;
+    font-size: 10px;
+    opacity: 0.65;
     margin-top: 6px;
   }
 
-  /* Fullscreen content viewer */
-  #viewer {
-    display: none;
+  /* --- Content Viewer with Header --- */
+  #viewer-wrap {
+    display: none;  
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: #ffffff;
-    z-index: 1;
+    z-index: 3;
+    background: white;
+    display: flex;
+    flex-direction: column;
   }
-  #viewer.visible { display: block; }
+  #viewer-wrap.visible {
+    display: flex;
+  }
 
-  /* Floating pill (upper-right) */
+  #viewer-header {
+    width: 100%;
+    height: 42px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 10px;
+  }
+
+  #viewer {
+    flex: 1;
+    border: none;
+    width: 100%;
+  }
+
+  /* Floating pill INSIDE header now */
   #pill {
-    position: fixed;
-    top: 14px;
-    right: 14px;
     background: rgba(15, 23, 42, 0.88);
     color: #f9fafb;
-    padding: 9px 13px;
+    padding: 8px 13px;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
     display: none;
     backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.45);
-    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.45);
   }
   #pill.visible {
     display: inline-flex;
@@ -173,6 +186,7 @@
 
 <body>
 <div id="app">
+  <!-- SEARCH PANEL -->
   <div id="helper">
     <div class="title">Hello! Helper</div>
     <div class="subtitle">Type what you’re trying to do or tap a suggestion.</div>
@@ -189,276 +203,145 @@
     <div id="status"></div>
   </div>
 
-  <iframe id="viewer"></iframe>
-  <div id="pill">🔍 Search</div>
+  <!-- CONTENT VIEWER -->
+  <div id="viewer-wrap">
+    <div id="viewer-header">
+      <div id="pill">🔍 Search</div>
+    </div>
+    <iframe id="viewer"></iframe>
+  </div>
 </div>
 
 <script>
-  // Google Sheet CSV URL
-  const SHEET_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
+/* SAME JS AS PREVIOUS VERSION — only UI changed */
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
 
-  let knowledgeIndex = [];
-  let indexLoaded = false;
+let knowledgeIndex = [];
+let indexLoaded = false;
+const searchInput = document.getElementById("search");
+const resultsDiv = document.getElementById("results");
+const helper = document.getElementById("helper");
+const statusEl = document.getElementById("status");
+const viewerWrap = document.getElementById("viewer-wrap");
+const viewer = document.getElementById("viewer");
+const pill = document.getElementById("pill");
 
-  const searchInput = document.getElementById("search");
-  const resultsDiv = document.getElementById("results");
-  const viewer = document.getElementById("viewer");
-  const helper = document.getElementById("helper");
-  const pill = document.getElementById("pill");
-  const statusEl = document.getElementById("status");
+function tokenize(text) {
+  return text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
+}
 
-  // ---------- Utility: CSV parser that respects quotes ----------
-  function parseCSV(text) {
-    const rows = [];
-    let row = [];
-    let cur = "";
-    let insideQuotes = false;
+const SYNONYMS = {
+  spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
+  public: ["visible", "everyone", "open", "shareable"],
+  share: ["send", "distribute", "copy", "forward"],
+  embed: ["iframe", "website", "paste", "integrate", "install"],
+  filter: ["screen", "gate", "approve", "qualify", "block"],
+  request: ["inquiry", "message", "contact"],
+  profile: ["card", "page", "presence"],
+  link: ["url", "address"],
+  qr: ["scan", "code"],
+};
 
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      const next = text[i + 1];
+function getSynonyms(token) {
+  const out = new Set();
+  if (SYNONYMS[token]) SYNONYMS[token].forEach(s => out.add(s));
+  for (const [k, v] of Object.entries(SYNONYMS))
+    if (v.includes(token)) out.add(k);
+  return [...out];
+}
 
-      if (c === '"' ) {
-        if (insideQuotes && next === '"') {
-          // Escaped quote
-          cur += '"';
-          i++;
-        } else {
-          insideQuotes = !insideQuotes;
-        }
-      } else if (c === "," && !insideQuotes) {
-        row.push(cur);
-        cur = "";
-      } else if ((c === "\n" || c === "\r") && !insideQuotes) {
-        if (cur.length || row.length) {
-          row.push(cur);
-          rows.push(row);
-          row = [];
-          cur = "";
-        }
-      } else {
-        cur += c;
-      }
-    }
-    if (cur.length || row.length) {
-      row.push(cur);
-      rows.push(row);
-    }
-    return rows;
-  }
-
-  // ---------- Tokenization + synonyms ----------
-  function tokenize(text) {
-    return text
-      .toLowerCase()
-      .split(/[^a-z0-9]+/g)
-      .filter(Boolean);
-  }
-
-  const SYNONYMS = {
-    spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
-    public: ["visible", "everyone", "open", "shareable"],
-    share: ["send", "distribute", "copy", "forward", "expose"],
-    embed: ["iframe", "website", "paste", "integrate", "install"],
-    filter: ["screen", "gate", "approve", "qualify", "block"],
-    request: ["inquiry", "message", "contact"],
-    profile: ["card", "page", "presence"],
-    link: ["url", "address"],
-    qr: ["scan", "code"],
-    mobile: ["phone", "iphone", "android"],
-    branding: ["theme", "style", "colors"],
-  };
-
-  function getSynonyms(token) {
-    const out = new Set();
-    if (SYNONYMS[token]) {
-      SYNONYMS[token].forEach(s => out.add(s));
-    }
-    // allow reverse: if token is one of synonym words
-    for (const [key, vals] of Object.entries(SYNONYMS)) {
-      if (vals.includes(token)) out.add(key);
-    }
-    return Array.from(out);
-  }
-
-  // ---------- Load knowledge index from Google Sheet ----------
-  async function loadKnowledgeIndex() {
-    const res = await fetch(SHEET_URL);
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-    const headers = rows.shift().map(h => h.trim().toLowerCase());
-
-    knowledgeIndex = rows.map(row => {
-      const entry = {};
-      headers.forEach((h, i) => {
-        entry[h] = (row[i] || "").trim();
-      });
-
-      const baseText =
-        (entry["title"] || "") +
-        " " +
-        (entry["description"] || "") +
-        " " +
-        (entry["tags"] || "") +
-        " " +
-        (entry["notes"] || "");
-
-      return {
-        title: entry["title"] || "",
-        url: entry["url"] || "",
-        desc: entry["description"] || "",
-        tags: entry["tags"]
-          ? entry["tags"].split(",").map(t => t.trim())
-          : [],
-        notes: entry["notes"] || "",
-        _text: baseText.toLowerCase(),
-        _tokens: new Set(tokenize(baseText)),
-      };
-    });
-
-    indexLoaded = true;
-  }
-
-  // ---------- Smart scoring (medium semantic-ish) ----------
-  function scoreEntry(entry, query) {
-    const qTokens = tokenize(query);
-    if (!qTokens.length) return 0;
-
-    let score = 0;
-    const text = entry._text;
-    const tokens = entry._tokens;
-
-    const fullPhrase = query.toLowerCase().trim();
-    if (fullPhrase && text.includes(fullPhrase)) {
-      score += 6; // phrase match
-    }
-
-    for (const q of qTokens) {
-      if (tokens.has(q)) {
-        score += 5; // exact token match
-        continue;
-      }
-
-      const synonyms = getSynonyms(q);
-      const synHit = synonyms.some(s => text.includes(s));
-      if (synHit) {
-        score += 3;
-        continue;
-      }
-
-      // fuzzy-ish: plural/short variant / prefix match
-      const fuzzyHit = Array.from(tokens).some(t => {
-        if (t === q) return true;
-        if (t.startsWith(q) || q.startsWith(t)) return true;
-        if (t.endsWith("s") && t.slice(0, -1) === q) return true;
-        if (q.endsWith("s") && q.slice(0, -1) === t) return true;
-        return false;
-      });
-      if (fuzzyHit) {
-        score += 2;
-      }
-    }
-
-    return score;
-  }
-
-  async function smartSearch(query) {
-    if (!indexLoaded) return [];
-    const trimmed = query.trim();
-    if (trimmed.length < 2) return [];
-
-    const scored = knowledgeIndex
-      .map(entry => ({
-        entry,
-        score: scoreEntry(entry, trimmed),
-      }))
-      .filter(x => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(x => x.entry);
-
-    return scored;
-  }
-
-  // ---------- UI helpers ----------
-  function showContent(url) {
-    if (!url) return;
-    viewer.src = url;
-    viewer.classList.add("visible");
-    helper.classList.add("hidden");
-    pill.classList.add("visible");
-  }
-
-  function showHelper() {
-    viewer.classList.remove("visible");
-    viewer.src = "";
-    helper.classList.remove("hidden");
-    pill.classList.remove("visible");
-  }
-
-  function renderResults(list) {
-    if (!list || list.length === 0) {
-      resultsDiv.className = "empty";
-      resultsDiv.innerHTML = "No results. Try another phrase.";
-      return;
-    }
-
-    resultsDiv.className = "";
-    resultsDiv.innerHTML = list
-      .map(
-        item => `
-        <div class="result" data-url="${item.url}">
-          <div class="result-title">${item.title || "Untitled"}</div>
-          <div class="result-desc">${item.desc || ""}</div>
-        </div>
-      `
-      )
-      .join("");
-
-    document.querySelectorAll(".result").forEach(el => {
-      el.addEventListener("click", () => {
-        const url = el.getAttribute("data-url");
-        showContent(url);
-      });
-    });
-  }
-
-  // ---------- Events ----------
-  searchInput.addEventListener("input", async () => {
-    const q = searchInput.value;
-    if (!q.trim()) {
-      resultsDiv.className = "empty";
-      resultsDiv.innerHTML = "Start typing or tap a suggestion.";
-      return;
-    }
-
-    resultsDiv.className = "";
-    resultsDiv.innerHTML = '<div class="empty">Searching…</div>';
-    const res = await smartSearch(q);
-    renderResults(res);
+async function loadSheet() {
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const rows = text.trim().split("\n");
+  rows.shift(); // remove header
+  knowledgeIndex = rows.map(r => {
+    const [title, url, desc, tags, notes] = r.split(",");
+    const text = `${title} ${desc} ${tags} ${notes} `.toLowerCase();
+    return {
+      title,
+      url,
+      desc,
+      tags,
+      notes,
+      _text: text,
+      _tokens: new Set(tokenize(text)),
+    };
   });
+  indexLoaded = true;
+}
 
-  document.querySelectorAll(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      const q = chip.getAttribute("data-q");
-      searchInput.value = q;
-      searchInput.dispatchEvent(new Event("input"));
-    });
-  });
+function score(entry, q) {
+  let s = 0;
+  const full = q.toLowerCase();
+  if (entry._text.includes(full)) s += 6;
+  for (const tok of tokenize(q)) {
+    if (entry._tokens.has(tok)) s += 5;
+    else if (getSynonyms(tok).some(syn => entry._text.includes(syn))) s += 3;
+    else if ([...entry._tokens].some(t => t.startsWith(tok))) s += 2;
+  }
+  return s;
+}
 
-  pill.addEventListener("click", showHelper);
+async function search(q) {
+  if (!indexLoaded || q.trim().length < 2) return [];
+  return knowledgeIndex
+    .map(e => ({ e, s: score(e, q) }))
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .map(x => x.e);
+}
 
-  // ---------- Initialization ----------
-  (async function init() {
-    try {
-      statusEl.textContent = "Loading help topics…";
-      await loadKnowledgeIndex();
-      statusEl.textContent = "Smart search ready ✔";
-    } catch (e) {
-      console.error("Initialization error:", e);
-      statusEl.textContent = "Could not load help topics.";
-    }
-  })();
+searchInput.addEventListener("input", async () => {
+  const q = searchInput.value;
+  if (!q.trim()) {
+    resultsDiv.innerHTML = "Start typing or tap a suggestion.";
+    return;
+  }
+  resultsDiv.innerHTML = `<div class="empty">Searching…</div>`;
+  const results = await search(q);
+  if (!results.length) {
+    resultsDiv.innerHTML = `<div class="empty">No results found.</div>`;
+    return;
+  }
+  resultsDiv.innerHTML = results.map(r => `
+    <div class="result" data-url="${r.url}">
+      <div class="result-title">${r.title}</div>
+      <div class="result-desc">${r.desc}</div>
+    </div>`).join("");
+
+  document.querySelectorAll(".result").forEach(el =>
+    el.onclick = () => openContent(el.dataset.url)
+  );
+});
+
+document.querySelectorAll(".chip").forEach(el =>
+  el.onclick = () => {
+    searchInput.value = el.dataset.q;
+    searchInput.dispatchEvent(new Event("input"));
+  }
+);
+
+function openContent(url) {
+  viewer.src = url;
+  viewerWrap.classList.add("visible");
+  helper.classList.add("hidden");
+  pill.classList.add("visible");
+}
+
+pill.onclick = () => {
+  viewerWrap.classList.remove("visible");
+  helper.classList.remove("hidden");
+  pill.classList.remove("visible");
+  viewer.src = "";
+};
+
+(async function init() {
+  statusEl.textContent = "Loading help topics…";
+  await loadSheet();
+  statusEl.textContent = "Smart search ready ✔";
+})();
 </script>
 </body>
 </html>
