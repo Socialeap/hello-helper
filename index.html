@@ -100,7 +100,7 @@ async function semanticSearch(query) {
       score: cosineSimilarity(vector, x.embedding)
     }))
     .sort((a,b)=>b.score-a.score)
-    .filter(x => true);
+    .filter(x => x.score > -999);
 }
 
 // ===============================================================
