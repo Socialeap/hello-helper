@@ -13,14 +13,18 @@
     margin: 0;
     padding: 0;
     background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh; /* ← Normal again */
+    height: 100vh;
+    overflow: hidden;
   }
 
-  .card {
-    width: 320px; /* Natural size */
+  /* ===========================
+     MAIN HELPER (Expanded Mode)
+  ============================== */
+  #helper {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 320px;
     background: rgba(255,255,255,0.42);
     backdrop-filter: blur(7px) saturate(180%);
     -webkit-backdrop-filter: blur(7px) saturate(180%);
@@ -28,72 +32,58 @@
     padding: 16px;
     border: 1px solid rgba(255,255,255,0.35);
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: opacity 0.25s, transform 0.25s;
   }
 
-  .title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
+  .title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; opacity:.65; margin-bottom: 10px; }
+  input { width: 100%; padding: 9px 11px; border-radius: 8px; font-size:14px; border:1px solid rgba(0,0,0,0.15); }
 
-  .subtitle {
-    font-size: 12px;
-    opacity: .65;
-    margin-bottom: 10px;
-  }
+  .suggestions { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+  .chip { font-size:10px; padding:5px 8px; border-radius:5px; cursor:pointer; background:rgba(255,255,255,.65); border:1px solid rgba(0,0,0,.1); }
 
-  input {
-    width: 100%;
-    padding: 9px 11px;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.15);
-    background: rgba(255,255,255,0.85);
-    font-size: 14px;
-    outline: none;
-  }
-
-  .suggestions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 10px 0;
-  }
-
-  .chip {
-    background: rgba(255,255,255,0.65);
-    border: 1px solid rgba(0,0,0,0.1);
-    padding: 5px 8px;
-    border-radius: 5px;
-    font-size: 10px;
-    cursor: pointer;
-  }
-
-  .result {
-    margin-top: 8px;
-    padding: 10px;
-    border-radius: 9px;
-    border: 1px solid rgba(0,0,0,0.1);
-    background: rgba(255,255,255,0.75);
-    font-size: 12px;
-  }
-
-  .result-desc {
-    font-size: 11px;
-    opacity: 0.8;
-  }
-
+  .result { margin-top:8px; padding:10px; border-radius:9px; border:1px solid rgba(0,0,0,.1); background:rgba(255,255,255,.75); font-size:12px; }
+  .result-desc { font-size:11px; opacity:.8; }
   a { color:#2563eb; text-decoration:none; font-size:11px; }
 
-  .empty {
-    font-size: 11px;
-    opacity: .6;
-    margin-top: 8px;
+  .empty { font-size:11px; opacity:.6; margin-top:8px; }
+
+  /* ===========================
+     Helper = Pill Mode
+  ============================== */
+  #pill {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.75);
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.2);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    cursor: pointer;
+    display: none;
+  }
+
+  /* ===========================
+     Content Viewer
+  ============================== */
+  #viewer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+    display: none;
   }
 </style>
 </head>
 
 <body>
-<div class="card">
+
+<!-- Full Helper UI -->
+<div id="helper">
   <div class="title">Hello! Helper</div>
   <div class="subtitle">Find answers quickly.</div>
 
@@ -108,52 +98,78 @@
   <div id="results" class="empty">Start typing or tap a suggestion.</div>
 </div>
 
+<!-- Pill Mode Button -->
+<div id="pill">🔍 Search</div>
+
+<!-- Embeddable Content Viewer -->
+<iframe id="viewer"></iframe>
+
 <script>
-// ================================
-// Simple Smart Search Engine
-// ================================
+// ====================================
+// Knowledge Data
+// ====================================
 const knowledgeIndex = [
   {
     title: "Create a public link",
-    url: "#",
+    url: "https://view.genial.ly/65f825d...example", // replace with real Genially URL
     desc: "Generate the shareable Hello! link for your profile.",
     tags: ["public","link","profile","url"]
   },
   {
     title: "Embed your Signature Card",
-    url: "#",
+    url: "https://view.genial.ly/65f826a...example",
     desc: "Add your card to any website using iframe or HTML.",
     tags: ["embed","iframe","html","card"]
   },
   {
     title: "Filter LinkUp requests",
-    url: "#",
+    url: "https://view.genial.ly/65f82de...example",
     desc: "Learn how the system blocks spam and low-quality requests.",
     tags: ["filter","linkup","requests","spam"]
   }
 ];
 
+// ====================================
+// Search Engine
+// ====================================
 function tokenize(t){ return t.toLowerCase().split(/\W+/).filter(Boolean); }
-
 function score(entry,q){
   const qT = tokenize(q);
-  const eT = tokenize(entry.title + " " + entry.desc + " " + entry.tags.join(" "));
+  const eT = tokenize(entry.title+" "+entry.desc+" "+entry.tags.join(" "));
   return qT.reduce((s,t)=>s+(eT.includes(t)?3:0),0);
 }
-
 function search(q){
-  return knowledgeIndex
-    .map(e=>({...e,score:score(e,q)}))
+  return knowledgeIndex.map(e=>({...e,score:score(e,q)}))
     .filter(e=>e.score>0)
     .sort((a,b)=>b.score-a.score);
 }
 
-// ================================
-// UI Binding
-// ================================
+// ====================================
+// UI
+// ====================================
+const helper = document.getElementById("helper");
+const pill = document.getElementById("pill");
+const viewer = document.getElementById("viewer");
 const input = document.getElementById("query");
 const results = document.getElementById("results");
 
+function openContent(url) {
+  viewer.src = url;
+  viewer.style.display = "block";
+  helper.style.display = "none";
+  pill.style.display = "block";
+}
+
+function showHelper() {
+  viewer.style.display = "none";
+  helper.style.display = "block";
+  pill.style.display = "none";
+  viewer.src = "";
+}
+
+pill.onclick = showHelper;
+
+// Search input
 input.addEventListener("input", () => {
   const q = input.value.trim();
   if (!q) return results.innerHTML = '<div class="empty">Start typing…</div>';
@@ -164,11 +180,20 @@ input.addEventListener("input", () => {
     <div class="result">
       <strong>${e.title}</strong><br>
       <span class="result-desc">${e.desc}</span><br>
-      <a href="${e.url}" target="_blank">Open</a>
+      <a href="#" data-url="${e.url}">Open</a>
     </div>
   `).join("");
+
+  // Attach click handlers
+  document.querySelectorAll(".result a").forEach(link => {
+    link.addEventListener("click", ev => {
+      ev.preventDefault();
+      openContent(ev.target.dataset.url);
+    });
+  });
 });
 
+// Chips
 document.querySelectorAll(".chip").forEach(chip => {
   chip.addEventListener("click", () => {
     const q = chip.dataset.q;
