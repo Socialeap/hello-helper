@@ -4,256 +4,222 @@
 <meta charset="UTF-8" />
 <title>Hello! Helper – Smart Search</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-
 <style>
-/* ===================================================
-   ROOT & GLOBAL
-=================================================== */
-* { box-sizing: border-box; }
+  * { box-sizing: border-box; }
 
-:root {
-  --card-bg: rgba(255, 255, 255, 0.22);
-  --card-border: rgba(255, 255, 255, 0.55);
-  --card-shadow: rgba(20, 25, 42, 0.40);
-  --text-base: #111;
-  --text-soft: rgba(0,0,0,0.55);
-  --blur-amount: 26px;
-  --chip-bg: rgba(255, 255, 255, 0.85);
-}
-
-/* Dark mode support (matches system theme) */
-@media (prefers-color-scheme: dark) {
   :root {
-    --card-bg: rgba(25, 25, 30, 0.28);
-    --card-border: rgba(255,255,255,0.18);
-    --card-shadow: rgba(0,0,0,0.6);
-    --text-base: #f9fafb;
-    --text-soft: rgba(255,255,255,0.60);
-    --chip-bg: rgba(255,255,255,0.15);
+    --bg-gradient: radial-gradient(circle at top left, #fdf2ff 0, #f5fbff 40%, #e0ecff 80%);
+    --card-bg: rgba(255, 255, 255, 0.24);
+    --card-border: rgba(255, 255, 255, 0.55);
+    --card-shadow: 0 18px 55px rgba(20, 25, 42, 0.40);
+    --card-text: #111827;
+    --header-bg: rgba(255,255,255,0.9);
+    --pill-bg: rgba(15, 23, 42, 0.88);
+    --pill-text: #f9fafb;
   }
-}
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  background: radial-gradient(circle at top left, #fdf2ff 0, #eef7ff 45%, #e7eefe 75%);
-  overflow: hidden;
-  transition: background 0.4s ease;
-}
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-gradient: radial-gradient(circle at top left, #020617 0, #020617 40%, #0b1120 80%);
+      --card-bg: rgba(15, 23, 42, 0.55);
+      --card-border: rgba(148, 163, 184, 0.6);
+      --card-shadow: 0 22px 60px rgba(0, 0, 0, 0.8);
+      --card-text: #e5e7eb;
+      --header-bg: rgba(15,23,42,0.9);
+      --pill-bg: rgba(248, 250, 252, 0.95);
+      --pill-text: #020617;
+    }
+  }
 
-/* ===================================================
-   APP FRAME
-=================================================== */
-#app {
-  width: 100%;
-  height: 100vh;
-  position: relative;
-}
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    background: var(--bg-gradient);
+    overflow: hidden;
+  }
 
-/* ===================================================
-   HELPER CARD (GLASS)
-=================================================== */
-#helper {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 460px;
-  max-width: 92vw;
-  transform: translate(-50%, -50%);
-  background: var(--card-bg);
-  border-radius: 22px;
-  padding: 20px 22px 16px;
-  border: 1px solid var(--card-border);
-  box-shadow: 0 18px 55px var(--card-shadow);
-  backdrop-filter: blur(var(--blur-amount)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
-  color: var(--text-base);
-  z-index: 10;
-  opacity: 0;
-  transform-origin: center;
-  animation: fadeInScale 0.45s ease forwards;
-}
+  #app {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
 
-/* ✨ Smooth entrance animation */
-@keyframes fadeInScale {
-  from { opacity: 0; transform: translate(-50%, -48%) scale(0.95); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
+  /* --- Frosted Glass Helper UI --- */
+  #helper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 440px; /* wider */
+    max-width: 92vw;
+    transform: translate(-50%, -50%);
+    background: var(--card-bg);
+    border-radius: 22px;
+    padding: 18px 20px 16px;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    color: var(--card-text);
+    z-index: 10;
+    opacity: 1;
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  }
+  #helper.hidden {
+    display: none;
+  }
 
-#helper.hidden { display: none; }
+  .title {
+    font-size: 19px;
+    font-weight: 650;
+    margin-bottom: 4px;
+  }
 
-/* ===================================================
-   HEADER TEXT
-=================================================== */
-.title {
-  font-size: 19px;
-  font-weight: 650;
-  margin-bottom: 4px;
-}
+  .subtitle {
+    font-size: 13px;
+    opacity: 0.75;
+    margin-bottom: 12px;
+  }
 
-.subtitle {
-  font-size: 13px;
-  opacity: 0.8;
-  margin-bottom: 12px;
-}
+  #search {
+    width: 100%;
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.88);
+    outline: none;
+  }
 
-/* ===================================================
-   SEARCH FIELD
-=================================================== */
-#search {
-  width: 100%;
-  padding: 9px 11px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.88);
-  outline: none;
-  transition: box-shadow 0.2s ease;
-}
+  #search:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+  }
 
-#search:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-}
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 8px;
+  }
 
-/* ===================================================
-   QUICK CHIPS
-=================================================== */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 10px 0 8px;
-}
+  .chip {
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s, transform 0.08s, box-shadow 0.12s;
+  }
 
-.chip {
-  padding: 4px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  background: var(--chip-bg);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.1s ease, background 0.2s ease;
-}
-.chip:hover { background: rgba(239, 246, 255, 0.95); transform: translateY(-1px); }
+  .chip:hover {
+    background: rgba(239, 246, 255, 0.98);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+  }
 
-/* ===================================================
-   RESULTS LIST
-=================================================== */
-#results {
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-#results::-webkit-scrollbar {
-  width: 6px;
-}
-#results::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.18);
-  border-radius: 6px;
-}
+  #results {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
 
-.result {
-  padding: 8px 10px;
-  background: rgba(255,255,255,0.80);
-  border-radius: 11px;
-  margin-bottom: 6px;
-  cursor: pointer;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-}
-.result:hover {
-  background: rgba(240,247,255,0.95);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
-}
+  .result {
+    padding: 8px 9px;
+    background: rgba(255, 255, 255, 0.82);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    transition: background 0.15s, transform 0.08s;
+  }
+  .result:hover {
+    background: #eff6ff;
+    transform: translateY(-1px);
+  }
 
-.result-title {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-.result-desc {
-  font-size: 11px;
-  opacity: 0.82;
-  line-height: 1.3;
-}
+  .result-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .result-desc {
+    font-size: 11px;
+    opacity: 0.82;
+    line-height: 1.3;
+  }
 
-/* Tag badges (new) */
-.badges {
-  margin-top: 3px;
-}
-.badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  margin-right: 4px;
-  border-radius: 6px;
-  background: rgba(90,95,255,0.14);
-  color: #3b3f8f;
-}
+  .empty {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 6px;
+  }
 
-/* ===================================================
-   VIEWER WITH HEADER
-=================================================== */
-#viewer-wrap {
-  position: absolute;
-  inset: 0;
-  display: none;
-  flex-direction: column;
-  background: white;
-  z-index: 3;
-  animation: fadeIn 0.25s ease;
-}
-#viewer-wrap.visible { display: flex; }
+  #status {
+    font-size: 10px;
+    opacity: 0.65;
+    margin-top: 6px;
+  }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+  /* --- Content Viewer with Header --- */
+  #viewer-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease-out;
+  }
+  #viewer-wrap.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
-#viewer-header {
-  height: 46px;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding-right: 12px;
-}
+  #viewer-header {
+    width: 100%;
+    height: 42px;
+    background: var(--header-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 10px;
+  }
 
-#viewer {
-  flex: 1;
-  border: none;
-  width: 100%;
-  background: white;
-}
+  #viewer {
+    flex: 1;
+    border: none;
+    width: 100%;
+  }
 
-/* ===================================================
-   FLOATING PILL (IN HEADER)
-=================================================== */
-#pill {
-  background: rgba(15, 23, 42, 0.85);
-  color: #f9fafb;
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  cursor: pointer;
-  display: none;
-  transition: transform 0.1s ease;
-}
-#pill.visible { display: inline-flex; }
-#pill:hover { transform: translateY(-1px); }
-
-.empty { font-size: 12px; opacity: 0.7; margin-top: 6px; }
-#status { font-size: 10px; opacity: 0.65; margin-top: 6px; }
+  /* Pill lives in header now */
+  #pill {
+    background: var(--pill-bg);
+    color: var(--pill-text);
+    padding: 8px 13px;
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.45);
+  }
+  #pill.visible {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
 </style>
 </head>
 
 <body>
 <div id="app">
-
   <!-- SEARCH PANEL -->
   <div id="helper">
     <div class="title">Hello! Helper</div>
@@ -278,169 +244,240 @@ body {
     </div>
     <iframe id="viewer"></iframe>
   </div>
-
 </div>
 
 <script>
-/* ===================================================
-   CORE CONFIG
-=================================================== */
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
+  const SHEET_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
 
-let knowledgeIndex = [];
-let indexLoaded = false;
+  let knowledgeIndex = [];
+  let indexLoaded = false;
+  const searchLog = []; // simple in-memory analytics
 
-/* Analytics (local only) */
-const analytics = {
-  searches: [],
-  clicks: [],
-};
+  const searchInput = document.getElementById("search");
+  const resultsDiv = document.getElementById("results");
+  const helper = document.getElementById("helper");
+  const statusEl = document.getElementById("status");
+  const viewerWrap = document.getElementById("viewer-wrap");
+  const viewer = document.getElementById("viewer");
+  const pill = document.getElementById("pill");
 
-/* ===================================================
-   UTILS
-=================================================== */
-function tokenize(text) {
-  return text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
-}
+  // --- Robust CSV parsing (handles commas + quotes) ---
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let insideQuotes = false;
 
-const SYNONYMS = {
-  spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
-  public: ["visible", "everyone", "open", "shareable"],
-  share: ["send", "distribute", "copy"],
-  embed: ["iframe", "website", "paste", "integrate"],
-  filter: ["screen", "gate", "approve", "block"],
-  request: ["inquiry", "message", "contact"],
-  link: ["url", "address"],
-  qr: ["scan", "code"],
-};
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      const next = text[i + 1];
 
-function getSynonyms(token) {
-  const out = new Set();
-  if (SYNONYMS[token]) SYNONYMS[token].forEach(s => out.add(s));
-  for (const [k, v] of Object.entries(SYNONYMS))
-    if (v.includes(token)) out.add(k);
-  return [...out];
-}
+      if (c === '"') {
+        if (insideQuotes && next === '"') {
+          cur += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (c === "," && !insideQuotes) {
+        row.push(cur);
+        cur = "";
+      } else if ((c === "\n" || c === "\r") && !insideQuotes) {
+        if (cur.length || row.length) {
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+        }
+      } else {
+        cur += c;
+      }
+    }
+    if (cur.length || row.length) {
+      row.push(cur);
+      rows.push(row);
+    }
+    return rows;
+  }
 
-/* ===================================================
-   LOAD SHEET
-=================================================== */
-async function loadSheet() {
-  const res = await fetch(SHEET_URL);
-  const text = await res.text();
-  const lines = text.trim().split("\n");
-  lines.shift(); // remove headers
+  function tokenize(text) {
+    return text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
+  }
 
-  knowledgeIndex = lines.map(row => {
-    const [title, url, desc, tags, notes] = row.split(",");
-    const full = `${title} ${desc} ${tags} ${notes}`.toLowerCase();
-    return {
-      title, url, desc,
-      tags: tags?.split(",").map(t => t.trim()) ?? [],
-      _text: full,
-      _tokens: new Set(tokenize(full)),
+  const SYNONYMS = {
+    spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
+    public: ["visible", "everyone", "open", "shareable"],
+    share: ["send", "distribute", "copy", "forward"],
+    embed: ["iframe", "website", "paste", "integrate", "install"],
+    filter: ["screen", "gate", "approve", "qualify", "block"],
+    request: ["inquiry", "message", "contact"],
+    profile: ["card", "page", "presence"],
+    link: ["url", "address"],
+    qr: ["scan", "code"],
+    mobile: ["phone", "iphone", "android"],
+    branding: ["theme", "style", "colors"],
+  };
+
+  function getSynonyms(token) {
+    const out = new Set();
+    if (SYNONYMS[token]) SYNONYMS[token].forEach(s => out.add(s));
+    for (const [k, v] of Object.entries(SYNONYMS))
+      if (v.includes(token)) out.add(k);
+    return [...out];
+  }
+
+  async function loadSheet() {
+    const res = await fetch(SHEET_URL);
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+    const headers = rows.shift().map(h => h.trim().toLowerCase());
+
+    knowledgeIndex = rows.map(r => {
+      const entry = {};
+      headers.forEach((h, i) => {
+        entry[h] = (r[i] || "").trim();
+      });
+
+      const title = entry["title"] || "";
+      const url = entry["url"] || "";
+      const desc = entry["description"] || "";
+      const tags = entry["tags"] || "";
+      const notes = entry["notes"] || "";
+      const base = `${title} ${desc} ${tags} ${notes}`.toLowerCase();
+
+      return {
+        title,
+        url,
+        desc,
+        tags,
+        notes,
+        _text: base,
+        _tokens: new Set(tokenize(base)),
+      };
+    });
+
+    indexLoaded = true;
+  }
+
+  function score(entry, q) {
+    let s = 0;
+    const full = q.toLowerCase().trim();
+    if (!full) return 0;
+
+    if (entry._text.includes(full)) s += 6;
+
+    const qTokens = tokenize(q);
+    for (const tok of qTokens) {
+      if (entry._tokens.has(tok)) {
+        s += 5;
+        continue;
+      }
+      const syns = getSynonyms(tok);
+      if (syns.some(syn => entry._text.includes(syn))) {
+        s += 3;
+        continue;
+      }
+      const fuzzy = [...entry._tokens].some(t => {
+        if (t === tok) return true;
+        if (t.startsWith(tok) || tok.startsWith(t)) return true;
+        if (t.endsWith("s") && t.slice(0, -1) === tok) return true;
+        if (tok.endsWith("s") && tok.slice(0, -1) === t) return true;
+        return false;
+      });
+      if (fuzzy) s += 2;
+    }
+    return s;
+  }
+
+  async function search(q) {
+    if (!indexLoaded || q.trim().length < 2) return [];
+    const scored = knowledgeIndex
+      .map(e => ({ e, s: score(e, q) }))
+      .filter(x => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .map(x => x.e);
+
+    // simple analytics entry
+    searchLog.push({
+      query: q,
+      results: scored.length,
+      at: new Date().toISOString(),
+    });
+    console.log("Helper search:", searchLog[searchLog.length - 1]);
+
+    return scored;
+  }
+
+  function renderResults(list) {
+    if (!list || list.length === 0) {
+      resultsDiv.className = "empty";
+      resultsDiv.innerHTML = "No results. Try another phrase.";
+      return;
+    }
+
+    resultsDiv.className = "";
+    resultsDiv.innerHTML = list
+      .map(
+        r => `
+      <div class="result" data-url="${r.url}">
+        <div class="result-title">${r.title || "Untitled"}</div>
+        <div class="result-desc">${r.desc || ""}</div>
+      </div>`
+      )
+      .join("");
+
+    document.querySelectorAll(".result").forEach(el => {
+      el.onclick = () => openContent(el.dataset.url);
+    });
+  }
+
+  searchInput.addEventListener("input", async () => {
+    const q = searchInput.value;
+    if (!q.trim()) {
+      resultsDiv.className = "empty";
+      resultsDiv.innerHTML = "Start typing or tap a suggestion.";
+      return;
+    }
+    resultsDiv.className = "";
+    resultsDiv.innerHTML = `<div class="empty">Searching…</div>`;
+    const res = await search(q);
+    renderResults(res);
+  });
+
+  document.querySelectorAll(".chip").forEach(el => {
+    el.onclick = () => {
+      const q = el.dataset.q;
+      searchInput.value = q;
+      searchInput.dispatchEvent(new Event("input"));
     };
   });
-  indexLoaded = true;
-}
 
-/* ===================================================
-   SMART SEARCH
-=================================================== */
-function score(entry, q) {
-  let s = 0;
-  const full = q.toLowerCase();
-  if (entry._text.includes(full)) s += 6;
-  for (const tok of tokenize(q)) {
-    if (entry._tokens.has(tok)) s += 5;
-    else if (getSynonyms(tok).some(syn => entry._text.includes(syn))) s += 3;
-    else if ([...entry._tokens].some(t => t.startsWith(tok))) s += 2;
-  }
-  return s;
-}
-
-async function search(q) {
-  if (!indexLoaded || q.length < 2) return [];
-  analytics.searches.push({ q, ts: Date.now() });
-
-  return knowledgeIndex
-    .map(e => ({ e, s: score(e, q) }))
-    .filter(x => x.s > 0)
-    .sort((a,b)=>b.s-a.s)
-    .map(x=>x.e);
-}
-
-/* ===================================================
-   UI + INTERACTION
-=================================================== */
-const searchInput = document.getElementById("search");
-const resultsDiv = document.getElementById("results");
-const statusEl = document.getElementById("status");
-const viewerWrap = document.getElementById("viewer-wrap");
-const viewer = document.getElementById("viewer");
-const helper = document.getElementById("helper");
-const pill = document.getElementById("pill");
-
-searchInput.addEventListener("input", async () => {
-  const q = searchInput.value.trim();
-  if (!q) {
-    resultsDiv.innerHTML = "Start typing or tap a suggestion.";
-    return;
-  }
-  resultsDiv.innerHTML = `<div class="empty">Searching…</div>`;
-  const results = await search(q);
-
-  if (!results.length) {
-    resultsDiv.innerHTML = `<div class="empty">No results found.</div>`;
-    return;
+  function openContent(url) {
+    if (!url) return;
+    viewer.src = url;
+    viewerWrap.classList.add("visible");
+    helper.classList.add("hidden");
+    pill.classList.add("visible");
   }
 
-  resultsDiv.innerHTML =
-    results.map(r => `
-      <div class="result" data-url="${r.url}">
-        <div class="result-title">${r.title}</div>
-        <div class="result-desc">${r.desc}</div>
-        ${r.tags?.length ? `
-          <div class="badges">
-            ${r.tags.map(t => `<span class="badge">${t}</span>`).join("")}
-          </div>` : ""}
-      </div>
-    `).join("");
+  pill.onclick = () => {
+    viewerWrap.classList.remove("visible");
+    helper.classList.remove("hidden");
+    pill.classList.remove("visible");
+    viewer.src = "";
+  };
 
-  document.querySelectorAll(".result").forEach(el =>
-    el.onclick = () => openContent(el.dataset.url)
-  );
-});
-
-document.querySelectorAll(".chip").forEach(el =>
-  el.onclick = () => {
-    searchInput.value = el.dataset.q;
-    searchInput.dispatchEvent(new Event("input"));
-  }
-);
-
-function openContent(url) {
-  analytics.clicks.push({ url, ts: Date.now() });
-
-  viewer.src = url;
-  viewerWrap.classList.add("visible");
-  helper.classList.add("hidden");
-  pill.classList.add("visible");
-}
-
-pill.onclick = () => {
-  viewerWrap.classList.remove("visible");
-  helper.classList.remove("hidden");
-  pill.classList.remove("visible");
-  viewer.src = "";
-};
-
-(async function init() {
-  statusEl.textContent = "Loading help topics…";
-  await loadSheet();
-  statusEl.textContent = "Smart search ready ✔";
-})();
+  (async function init() {
+    try {
+      statusEl.textContent = "Loading help topics…";
+      await loadSheet();
+      statusEl.textContent = "Smart search ready ✔";
+    } catch (e) {
+      console.error("Initialization error", e);
+      statusEl.textContent = "Could not load help topics.";
+    }
+  })();
 </script>
 </body>
 </html>
