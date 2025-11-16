@@ -4,223 +4,308 @@
 <meta charset="UTF-8" />
 <title>Hello! Helper – Smart Search</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+
 <style>
-  * { box-sizing: border-box; }
+/* ===================================================
+   ROOT & GLOBAL
+=================================================== */
+* { box-sizing: border-box; }
 
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.45);  /* readable glass */
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-shadow: rgba(20, 25, 42, 0.28);
+  --text-strong: #111827;
+  --text-soft: rgba(15,23,42,0.65);
+  --blur: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg-gradient: radial-gradient(circle at top left, #fdf2ff 0, #f5fbff 40%, #e0ecff 80%);
-    --card-bg: rgba(255, 255, 255, 0.24);
-    --card-border: rgba(255, 255, 255, 0.55);
-    --card-shadow: 0 18px 55px rgba(20, 25, 42, 0.40);
-    --card-text: #111827;
-    --header-bg: rgba(255,255,255,0.9);
-    --pill-bg: rgba(15, 23, 42, 0.88);
-    --pill-text: #f9fafb;
+    --glass-bg: rgba(20, 24, 34, 0.72);
+    --glass-border: rgba(148, 163, 184, 0.6);
+    --glass-shadow: rgba(0,0,0,0.7);
+    --text-strong: #f9fafb;
+    --text-soft: rgba(209,213,219,0.9);
   }
+}
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg-gradient: radial-gradient(circle at top left, #020617 0, #020617 40%, #0b1120 80%);
-      --card-bg: rgba(15, 23, 42, 0.55);
-      --card-border: rgba(148, 163, 184, 0.6);
-      --card-shadow: 0 22px 60px rgba(0, 0, 0, 0.8);
-      --card-text: #e5e7eb;
-      --header-bg: rgba(15,23,42,0.9);
-      --pill-bg: rgba(248, 250, 252, 0.95);
-      --pill-text: #020617;
-    }
-  }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: radial-gradient(circle at top left, #fdf7ff 0, #eef6ff 45%, #dde8ff 80%);
+  overflow: hidden;
+  transition: background 0.4s ease;
+}
 
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    background: var(--bg-gradient);
-    overflow: hidden;
-  }
+#app {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
 
-  #app {
-    width: 100%;
-    height: 100vh;
-    position: relative;
-  }
+/* ===================================================
+   HELPER CARD (GLASS)
+=================================================== */
+#helper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 460px;
+  max-width: 92vw;
+  transform: translate(-50%, -50%);
+  background: var(--glass-bg);
+  border-radius: 22px;
+  padding: 20px 22px 16px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 18px 50px var(--glass-shadow);
+  backdrop-filter: blur(var(--blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+  color: var(--text-strong);
+  z-index: 10;
+  opacity: 0;
+  transform-origin: center;
+  animation: helperIn 0.45s ease forwards;
+}
 
-  /* --- Frosted Glass Helper UI --- */
-  #helper {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 440px; /* wider */
-    max-width: 92vw;
-    transform: translate(-50%, -50%);
-    background: var(--card-bg);
-    border-radius: 22px;
-    padding: 18px 20px 16px;
-    border: 1px solid var(--card-border);
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(26px) saturate(180%);
-    -webkit-backdrop-filter: blur(26px) saturate(180%);
-    color: var(--card-text);
-    z-index: 10;
-    opacity: 1;
-    transition: opacity 0.18s ease-out, transform 0.18s ease-out;
-  }
-  #helper.hidden {
-    display: none;
-  }
+@keyframes helperIn {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 
-  .title {
-    font-size: 19px;
-    font-weight: 650;
-    margin-bottom: 4px;
-  }
+#helper.hidden { display: none; }
 
-  .subtitle {
-    font-size: 13px;
-    opacity: 0.75;
-    margin-bottom: 12px;
-  }
+.title {
+  font-size: 19px;
+  font-weight: 650;
+  margin-bottom: 4px;
+}
 
-  #search {
-    width: 100%;
-    padding: 9px 11px;
-    border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.6);
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.88);
-    outline: none;
-  }
+.subtitle {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+}
 
-  #search:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
-  }
+/* ===================================================
+   SEARCH + CHIPS
+=================================================== */
+#search {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  color: var(--text-strong);
+}
 
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 10px 0 8px;
-  }
+#search:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
 
-  .chip {
-    padding: 4px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(148, 163, 184, 0.6);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.12s, transform 0.08s, box-shadow 0.12s;
-  }
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
 
-  .chip:hover {
-    background: rgba(239, 246, 255, 0.98);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
-  }
+.chip {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+.chip:hover { background: rgba(239,246,255,0.95); transform: translateY(-1px); }
 
-  #results {
-    max-height: 280px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
+/* ===================================================
+   RESULTS
+=================================================== */
+#results {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+#results::-webkit-scrollbar { width: 6px; }
+#results::-webkit-scrollbar-thumb {
+  background: rgba(15,23,42,0.3);
+  border-radius: 6px;
+}
 
-  .result {
-    padding: 8px 9px;
-    background: rgba(255, 255, 255, 0.82);
-    border-radius: 10px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    transition: background 0.15s, transform 0.08s;
-  }
-  .result:hover {
-    background: #eff6ff;
-    transform: translateY(-1px);
-  }
+.result {
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.82);
+  border-radius: 11px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.result:hover {
+  background: rgba(240,247,255,0.96);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(15,23,42,0.12);
+}
 
-  .result-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 2px;
-  }
-  .result-desc {
-    font-size: 11px;
-    opacity: 0.82;
-    line-height: 1.3;
-  }
+.result-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
 
-  .empty {
-    font-size: 12px;
-    opacity: 0.7;
-    margin-top: 6px;
-  }
+.result-desc {
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.3;
+}
 
-  #status {
-    font-size: 10px;
-    opacity: 0.65;
-    margin-top: 6px;
-  }
+.badges {
+  margin-top: 3px;
+}
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 6px;
+  background: rgba(59,130,246,0.15);
+  color: #1d4ed8;
+}
 
-  /* --- Content Viewer with Header --- */
-  #viewer-wrap {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.16s ease-out;
-  }
-  #viewer-wrap.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.empty {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 6px;
+}
 
-  #viewer-header {
-    width: 100%;
-    height: 42px;
-    background: var(--header-bg);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding-right: 10px;
-  }
+#status {
+  font-size: 10px;
+  color: var(--text-soft);
+  margin-top: 6px;
+}
 
-  #viewer {
-    flex: 1;
-    border: none;
-    width: 100%;
-  }
+/* ===================================================
+   VIEWER + HEADER + PILL
+=================================================== */
+#viewer-wrap {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  background: #ffffff;
+  z-index: 3;
+  animation: fadeIn 0.25s ease;
+}
+#viewer-wrap.visible { display: flex; }
 
-  /* Pill lives in header now */
-  #pill {
-    background: var(--pill-bg);
-    color: var(--pill-text);
-    padding: 8px 13px;
-    border-radius: 999px;
-    font-size: 12px;
-    cursor: pointer;
-    display: none;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.45);
-  }
-  #pill.visible {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#viewer-header {
+  height: 46px;
+  background: rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(148,163,184,0.25);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 12px;
+}
+
+#viewer {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: #ffffff;
+}
+
+#pill {
+  background: rgba(15, 23, 42, 0.9);
+  color: #f9fafb;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  display: none;
+  transition: transform 0.1s ease;
+}
+#pill.visible { display: inline-flex; }
+#pill:hover { transform: translateY(-1px); }
+
+/* ===================================================
+   ANALYTICS MODAL
+=================================================== */
+.helper-analytics-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+}
+.helper-analytics-modal {
+  width: 640px;
+  max-width: 92vw;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, monospace;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.helper-analytics-modal h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.helper-analytics-modal pre {
+  flex: 1;
+  margin: 0;
+  padding: 8px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  overflow: auto;
+  font-size: 11px;
+}
+.helper-analytics-modal .buttons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.helper-analytics-modal button {
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 7px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  cursor: pointer;
+}
+.helper-analytics-modal button.primary {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+.helper-analytics-modal button:hover {
+  filter: brightness(0.96);
+}
 </style>
 </head>
 
 <body>
 <div id="app">
-  <!-- SEARCH PANEL -->
+  <!-- HELPER PANEL -->
   <div id="helper">
     <div class="title">Hello! Helper</div>
     <div class="subtitle">Type what you’re trying to do or tap a suggestion.</div>
@@ -247,237 +332,298 @@
 </div>
 
 <script>
-  const SHEET_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
+/* ===================================================
+   CONFIG
+=================================================== */
 
-  let knowledgeIndex = [];
-  let indexLoaded = false;
-  const searchLog = []; // simple in-memory analytics
+// Content index (help topics) Sheet
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
 
-  const searchInput = document.getElementById("search");
-  const resultsDiv = document.getElementById("results");
-  const helper = document.getElementById("helper");
-  const statusEl = document.getElementById("status");
-  const viewerWrap = document.getElementById("viewer-wrap");
-  const viewer = document.getElementById("viewer");
-  const pill = document.getElementById("pill");
+// TODO: replace with your Apps Script Web App URL for analytics sync.
+// Example: "https://script.google.com/macros/s/XXXX/exec"
+const ANALYTICS_ENDPOINT = ""; // <--- paste your endpoint here when ready
 
-  // --- Robust CSV parsing (handles commas + quotes) ---
-  function parseCSV(text) {
-    const rows = [];
-    let row = [];
-    let cur = "";
-    let insideQuotes = false;
+/* ===================================================
+   PERSISTENT ANALYTICS
+=================================================== */
+const analyticsKey = "hello-helper-analytics-v1";
 
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      const next = text[i + 1];
+// Load existing analytics or init fresh
+let analytics = JSON.parse(
+  localStorage.getItem(analyticsKey) ||
+  `{"searches":[],"clicks":[],"sessions":0,"lastSynced":null}`
+);
 
-      if (c === '"') {
-        if (insideQuotes && next === '"') {
-          cur += '"';
-          i++;
-        } else {
-          insideQuotes = !insideQuotes;
-        }
-      } else if (c === "," && !insideQuotes) {
-        row.push(cur);
-        cur = "";
-      } else if ((c === "\n" || c === "\r") && !insideQuotes) {
-        if (cur.length || row.length) {
-          row.push(cur);
-          rows.push(row);
-          row = [];
-          cur = "";
-        }
-      } else {
-        cur += c;
-      }
-    }
-    if (cur.length || row.length) {
-      row.push(cur);
-      rows.push(row);
-    }
-    return rows;
-  }
+analytics.sessions++;
+saveAnalytics();
 
-  function tokenize(text) {
-    return text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
-  }
+function saveAnalytics() {
+  localStorage.setItem(analyticsKey, JSON.stringify(analytics));
+}
 
-  const SYNONYMS = {
-    spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
-    public: ["visible", "everyone", "open", "shareable"],
-    share: ["send", "distribute", "copy", "forward"],
-    embed: ["iframe", "website", "paste", "integrate", "install"],
-    filter: ["screen", "gate", "approve", "qualify", "block"],
-    request: ["inquiry", "message", "contact"],
-    profile: ["card", "page", "presence"],
-    link: ["url", "address"],
-    qr: ["scan", "code"],
-    mobile: ["phone", "iphone", "android"],
-    branding: ["theme", "style", "colors"],
-  };
+function logSearch(q) {
+  analytics.searches.push({ q, ts: Date.now() });
+  scheduleAnalyticsSync();
+  saveAnalytics();
+}
 
-  function getSynonyms(token) {
-    const out = new Set();
-    if (SYNONYMS[token]) SYNONYMS[token].forEach(s => out.add(s));
-    for (const [k, v] of Object.entries(SYNONYMS))
-      if (v.includes(token)) out.add(k);
-    return [...out];
-  }
+function logClick(url) {
+  analytics.clicks.push({ url, ts: Date.now() });
+  scheduleAnalyticsSync();
+  saveAnalytics();
+}
 
-  async function loadSheet() {
-    const res = await fetch(SHEET_URL);
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-    const headers = rows.shift().map(h => h.trim().toLowerCase());
+/* --- Debounced sync to Google Sheets via Apps Script --- */
+let syncTimer = null;
 
-    knowledgeIndex = rows.map(r => {
-      const entry = {};
-      headers.forEach((h, i) => {
-        entry[h] = (r[i] || "").trim();
-      });
+function scheduleAnalyticsSync() {
+  if (!ANALYTICS_ENDPOINT) return; // safety: no endpoint yet
+  if (syncTimer) return;
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    syncAnalytics();
+  }, 5000); // batch events every 5 seconds
+}
 
-      const title = entry["title"] || "";
-      const url = entry["url"] || "";
-      const desc = entry["description"] || "";
-      const tags = entry["tags"] || "";
-      const notes = entry["notes"] || "";
-      const base = `${title} ${desc} ${tags} ${notes}`.toLowerCase();
-
-      return {
-        title,
-        url,
-        desc,
-        tags,
-        notes,
-        _text: base,
-        _tokens: new Set(tokenize(base)),
-      };
+async function syncAnalytics() {
+  if (!ANALYTICS_ENDPOINT) return;
+  try {
+    const payload = {
+      analytics,
+      origin: location.origin,
+      path: location.pathname,
+      ua: navigator.userAgent,
+    };
+    await fetch(ANALYTICS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
-
-    indexLoaded = true;
+    analytics.lastSynced = Date.now();
+    saveAnalytics();
+    console.log("Helper analytics synced");
+  } catch (err) {
+    console.warn("Analytics sync failed (will try again later)", err);
   }
+}
 
-  function score(entry, q) {
-    let s = 0;
-    const full = q.toLowerCase().trim();
-    if (!full) return 0;
+/* ===================================================
+   SEARCH ENGINE
+=================================================== */
+let knowledgeIndex = [];
+let indexLoaded = false;
 
-    if (entry._text.includes(full)) s += 6;
+function tokenize(text) {
+  return text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
+}
 
-    const qTokens = tokenize(q);
-    for (const tok of qTokens) {
-      if (entry._tokens.has(tok)) {
-        s += 5;
-        continue;
-      }
-      const syns = getSynonyms(tok);
-      if (syns.some(syn => entry._text.includes(syn))) {
-        s += 3;
-        continue;
-      }
-      const fuzzy = [...entry._tokens].some(t => {
-        if (t === tok) return true;
-        if (t.startsWith(tok) || tok.startsWith(t)) return true;
-        if (t.endsWith("s") && t.slice(0, -1) === tok) return true;
-        if (tok.endsWith("s") && tok.slice(0, -1) === t) return true;
-        return false;
-      });
-      if (fuzzy) s += 2;
-    }
-    return s;
-  }
+const SYNONYMS = {
+  spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
+  public: ["visible", "everyone", "open", "shareable"],
+  share: ["send", "distribute", "copy"],
+  embed: ["iframe", "website", "paste", "integrate"],
+  filter: ["screen", "gate", "approve", "block"],
+  request: ["inquiry", "message", "contact"],
+  link: ["url", "address"],
+  qr: ["scan", "code"],
+};
 
-  async function search(q) {
-    if (!indexLoaded || q.trim().length < 2) return [];
-    const scored = knowledgeIndex
-      .map(e => ({ e, s: score(e, q) }))
-      .filter(x => x.s > 0)
-      .sort((a, b) => b.s - a.s)
-      .map(x => x.e);
+function getSynonyms(token) {
+  const out = new Set();
+  if (SYNONYMS[token]) SYNONYMS[token].forEach(s => out.add(s));
+  for (const [k, v] of Object.entries(SYNONYMS))
+    if (v.includes(token)) out.add(k);
+  return [...out];
+}
 
-    // simple analytics entry
-    searchLog.push({
-      query: q,
-      results: scored.length,
-      at: new Date().toISOString(),
-    });
-    console.log("Helper search:", searchLog[searchLog.length - 1]);
+async function loadSheet() {
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const lines = text.trim().split("\n");
+  lines.shift(); // drop header
 
-    return scored;
-  }
+  knowledgeIndex = lines.map(row => {
+    const parts = row.split(",");
+    const title = (parts[0] || "").trim();
+    const url = (parts[1] || "").trim();
+    const desc = (parts[2] || "").trim();
+    const tagsRaw = (parts[3] || "").trim();
+    const notes = (parts[4] || "").trim();
+    const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()) : [];
+    const fullText = `${title} ${desc} ${tags.join(" ")} ${notes}`.toLowerCase();
 
-  function renderResults(list) {
-    if (!list || list.length === 0) {
-      resultsDiv.className = "empty";
-      resultsDiv.innerHTML = "No results. Try another phrase.";
-      return;
-    }
-
-    resultsDiv.className = "";
-    resultsDiv.innerHTML = list
-      .map(
-        r => `
-      <div class="result" data-url="${r.url}">
-        <div class="result-title">${r.title || "Untitled"}</div>
-        <div class="result-desc">${r.desc || ""}</div>
-      </div>`
-      )
-      .join("");
-
-    document.querySelectorAll(".result").forEach(el => {
-      el.onclick = () => openContent(el.dataset.url);
-    });
-  }
-
-  searchInput.addEventListener("input", async () => {
-    const q = searchInput.value;
-    if (!q.trim()) {
-      resultsDiv.className = "empty";
-      resultsDiv.innerHTML = "Start typing or tap a suggestion.";
-      return;
-    }
-    resultsDiv.className = "";
-    resultsDiv.innerHTML = `<div class="empty">Searching…</div>`;
-    const res = await search(q);
-    renderResults(res);
-  });
-
-  document.querySelectorAll(".chip").forEach(el => {
-    el.onclick = () => {
-      const q = el.dataset.q;
-      searchInput.value = q;
-      searchInput.dispatchEvent(new Event("input"));
+    return {
+      title,
+      url,
+      desc,
+      tags,
+      notes,
+      _text: fullText,
+      _tokens: new Set(tokenize(fullText)),
     };
   });
 
-  function openContent(url) {
-    if (!url) return;
-    viewer.src = url;
-    viewerWrap.classList.add("visible");
-    helper.classList.add("hidden");
-    pill.classList.add("visible");
+  indexLoaded = true;
+}
+
+function scoreEntry(entry, q) {
+  let s = 0;
+  const full = q.toLowerCase();
+  if (entry._text.includes(full)) s += 6;
+  const tokens = tokenize(q);
+  for (const tok of tokens) {
+    if (entry._tokens.has(tok)) {
+      s += 5;
+      continue;
+    }
+    const syns = getSynonyms(tok);
+    if (syns.some(syn => entry._text.includes(syn))) {
+      s += 3;
+      continue;
+    }
+    const fuzzy = [...entry._tokens].some(t => {
+      if (t === tok) return true;
+      if (t.startsWith(tok) || tok.startsWith(t)) return true;
+      if (t.endsWith("s") && t.slice(0, -1) === tok) return true;
+      if (tok.endsWith("s") && tok.slice(0, -1) === t) return true;
+      return false;
+    });
+    if (fuzzy) s += 2;
+  }
+  return s;
+}
+
+async function smartSearch(q) {
+  if (!indexLoaded || q.trim().length < 2) return [];
+  logSearch(q);
+  return knowledgeIndex
+    .map(entry => ({ entry, s: scoreEntry(entry, q) }))
+    .filter(x => x.s > 0)
+    .sort((a,b) => b.s - a.s)
+    .map(x => x.entry);
+}
+
+/* ===================================================
+   UI + INTERACTION
+=================================================== */
+const searchInput = document.getElementById("search");
+const resultsDiv = document.getElementById("results");
+const statusEl = document.getElementById("status");
+const viewerWrap = document.getElementById("viewer-wrap");
+const viewer = document.getElementById("viewer");
+const helper = document.getElementById("helper");
+const pill = document.getElementById("pill");
+
+searchInput.addEventListener("input", async () => {
+  const q = searchInput.value.trim();
+  if (!q) {
+    resultsDiv.className = "empty";
+    resultsDiv.innerHTML = "Start typing or tap a suggestion.";
+    return;
+  }
+  resultsDiv.className = "";
+  resultsDiv.innerHTML = '<div class="empty">Searching…</div>';
+
+  const results = await smartSearch(q);
+  if (!results.length) {
+    resultsDiv.innerHTML = '<div class="empty">No results found.</div>';
+    return;
   }
 
-  pill.onclick = () => {
-    viewerWrap.classList.remove("visible");
-    helper.classList.remove("hidden");
-    pill.classList.remove("visible");
-    viewer.src = "";
-  };
+  resultsDiv.innerHTML = results.map(r => `
+    <div class="result" data-url="${r.url}">
+      <div class="result-title">${r.title || "Untitled"}</div>
+      <div class="result-desc">${r.desc || ""}</div>
+      ${r.tags && r.tags.length ? `
+        <div class="badges">
+          ${r.tags.map(t => `<span class="badge">${t}</span>`).join("")}
+        </div>` : ""}
+    </div>
+  `).join("");
 
-  (async function init() {
-    try {
-      statusEl.textContent = "Loading help topics…";
-      await loadSheet();
-      statusEl.textContent = "Smart search ready ✔";
-    } catch (e) {
-      console.error("Initialization error", e);
-      statusEl.textContent = "Could not load help topics.";
-    }
-  })();
+  document.querySelectorAll(".result").forEach(el => {
+    el.onclick = () => openContent(el.getAttribute("data-url"));
+  });
+});
+
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const q = chip.getAttribute("data-q");
+    searchInput.value = q;
+    searchInput.dispatchEvent(new Event("input"));
+  });
+});
+
+function openContent(url) {
+  if (!url) return;
+  logClick(url);
+  viewer.src = url;
+  viewerWrap.classList.add("visible");
+  helper.classList.add("hidden");
+  pill.classList.add("visible");
+}
+
+pill.addEventListener("click", () => {
+  viewerWrap.classList.remove("visible");
+  helper.classList.remove("hidden");
+  pill.classList.remove("visible");
+  viewer.src = "";
+});
+
+/* ===================================================
+   ANALYTICS VIEWER (Cmd/Ctrl+Shift+A)
+=================================================== */
+window.addEventListener("keydown", (e) => {
+  const mac = navigator.platform.toLowerCase().includes("mac");
+  const mod = mac ? e.metaKey : e.ctrlKey;
+  if (mod && e.shiftKey && e.key.toLowerCase() === "a") {
+    e.preventDefault();
+    showAnalyticsModal();
+  }
+});
+
+function showAnalyticsModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "helper-analytics-overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "helper-analytics-modal";
+
+  const pretty = JSON.stringify(analytics, null, 2);
+
+  modal.innerHTML = `
+    <h3>Hello! Helper Analytics</h3>
+    <pre>${pretty}</pre>
+    <div class="buttons">
+      <button class="primary" id="copyAnalytics">Copy JSON</button>
+      <button id="closeAnalytics">Close</button>
+    </div>
+  `;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  document.getElementById("closeAnalytics").onclick = () => overlay.remove();
+  document.getElementById("copyAnalytics").onclick = () => {
+    navigator.clipboard.writeText(pretty).then(() => {
+      alert("Analytics JSON copied to clipboard.");
+    });
+  };
+}
+
+/* ===================================================
+   INIT
+=================================================== */
+(async function init() {
+  statusEl.textContent = "Loading help topics…";
+  try {
+    await loadSheet();
+    statusEl.textContent = "Smart search ready ✔";
+  } catch (err) {
+    console.error("Failed to load help index:", err);
+    statusEl.textContent = "Could not load help topics.";
+  }
+})();
 </script>
 </body>
 </html>
