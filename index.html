@@ -6,13 +6,7 @@
 <title>Hello! Helper</title>
 
 <style>
-  /* HiDPI crisp rendering trick */
-  html {
-    transform: scale(0.5);          /* scale UI down, not iframe */
-    transform-origin: top left;
-    width: 200%;                     /* 2x internal render resolution */
-    height: 200%;
-  }
+  * { box-sizing: border-box; }
 
   body {
     font-family: system-ui, sans-serif;
@@ -22,28 +16,79 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 200vh; /* matches scaling */
+    height: 100vh; /* ← Normal again */
   }
 
   .card {
-    width: 640px; /* rendered at 2x */
+    width: 320px; /* Natural size */
     background: rgba(255,255,255,0.42);
-    backdrop-filter: blur(14px) saturate(180%);
-    -webkit-backdrop-filter: blur(14px) saturate(180%);
-    border-radius: 36px;
-    padding: 32px;
+    backdrop-filter: blur(7px) saturate(180%);
+    -webkit-backdrop-filter: blur(7px) saturate(180%);
+    border-radius: 18px;
+    padding: 16px;
     border: 1px solid rgba(255,255,255,0.35);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   }
 
-  .title { font-size: 36px; font-weight: 600; margin-bottom: 8px; }
-  .subtitle { font-size: 24px; opacity: .65; margin-bottom: 20px; }
-  input { width:100%; padding:18px 22px; border-radius:16px; font-size: 28px; }
-  .chip { font-size:20px; padding:10px 16px; border-radius:10px; cursor:pointer; }
-  .result { font-size: 24px; padding:20px; border-radius:18px; }
-  .empty { font-size: 22px; opacity:.6; margin-top:16px; }
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
 
-  /* (Same search logic and JS below ) */
+  .subtitle {
+    font-size: 12px;
+    opacity: .65;
+    margin-bottom: 10px;
+  }
+
+  input {
+    width: 100%;
+    padding: 9px 11px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.85);
+    font-size: 14px;
+    outline: none;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0;
+  }
+
+  .chip {
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    cursor: pointer;
+  }
+
+  .result {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.75);
+    font-size: 12px;
+  }
+
+  .result-desc {
+    font-size: 11px;
+    opacity: 0.8;
+  }
+
+  a { color:#2563eb; text-decoration:none; font-size:11px; }
+
+  .empty {
+    font-size: 11px;
+    opacity: .6;
+    margin-top: 8px;
+  }
 </style>
 </head>
 
@@ -64,43 +109,73 @@
 </div>
 
 <script>
+// ================================
+// Simple Smart Search Engine
+// ================================
 const knowledgeIndex = [
-  { title:"Create a public link", url:"#", desc:"Generate your shareable link.", tags:["public","link","profile"]},
-  { title:"Embed your Signature Card", url:"#", desc:"Add your card to a website.", tags:["embed","iframe","html"]},
-  { title:"Filter LinkUp requests", url:"#", desc:"Learn how spam is blocked.", tags:["filter","spam","requests"]},
+  {
+    title: "Create a public link",
+    url: "#",
+    desc: "Generate the shareable Hello! link for your profile.",
+    tags: ["public","link","profile","url"]
+  },
+  {
+    title: "Embed your Signature Card",
+    url: "#",
+    desc: "Add your card to any website using iframe or HTML.",
+    tags: ["embed","iframe","html","card"]
+  },
+  {
+    title: "Filter LinkUp requests",
+    url: "#",
+    desc: "Learn how the system blocks spam and low-quality requests.",
+    tags: ["filter","linkup","requests","spam"]
+  }
 ];
 
 function tokenize(t){ return t.toLowerCase().split(/\W+/).filter(Boolean); }
-function score(e,q){
+
+function score(entry,q){
   const qT = tokenize(q);
-  const eT = tokenize(e.title+" "+e.desc+" "+e.tags.join(" "));
+  const eT = tokenize(entry.title + " " + entry.desc + " " + entry.tags.join(" "));
   return qT.reduce((s,t)=>s+(eT.includes(t)?3:0),0);
 }
+
 function search(q){
-  return knowledgeIndex.map(e=>({...e,score:score(e,q)}))
-    .filter(e=>e.score>0).sort((a,b)=>b.score-a.score);
+  return knowledgeIndex
+    .map(e=>({...e,score:score(e,q)}))
+    .filter(e=>e.score>0)
+    .sort((a,b)=>b.score-a.score);
 }
 
-const input=document.getElementById("query");
-const results=document.getElementById("results");
-input.addEventListener("input",()=>{
-  const q=input.value.trim();
-  if(!q)return results.innerHTML='<div class="empty">Start typing…</div>';
-  const r=search(q);
-  if(!r.length)return results.innerHTML='<div class="empty">No results.</div>';
-  results.innerHTML=r.map(e=>`
+// ================================
+// UI Binding
+// ================================
+const input = document.getElementById("query");
+const results = document.getElementById("results");
+
+input.addEventListener("input", () => {
+  const q = input.value.trim();
+  if (!q) return results.innerHTML = '<div class="empty">Start typing…</div>';
+  const r = search(q);
+  if (!r.length) return results.innerHTML = '<div class="empty">No results.</div>';
+
+  results.innerHTML = r.map(e => `
     <div class="result">
       <strong>${e.title}</strong><br>
-      <span>${e.desc}</span><br>
+      <span class="result-desc">${e.desc}</span><br>
       <a href="${e.url}" target="_blank">Open</a>
     </div>
   `).join("");
 });
-document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
-  input.value=c.dataset.q;
-  input.dispatchEvent(new Event("input"));
+
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const q = chip.dataset.q;
+    input.value = q;
+    input.dispatchEvent(new Event("input"));
+  });
 });
 </script>
-
 </body>
 </html>
