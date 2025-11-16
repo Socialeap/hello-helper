@@ -1,88 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Hello! Semantic Search</title>
-
-<style>
-  body {
-    font-family: system-ui, sans-serif;
-    padding: 20px;
-    background: #f8f9fb;
-  }
-  .search-box {
-    max-width: 520px;
-    margin: auto;
-  }
-  input {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-  }
-  .result {
-    margin-top: 14px;
-    padding: 12px;
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #eee;
-  }
-  a {
-    color: #0077ff;
-    text-decoration: none;
-    font-weight: 600;
-  }
-</style>
-
-<!-- IMPORTANT: Tiny in-browser transformer -->
-<script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hello! Helper Smart Search</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 20px;
+      background: #f5f5f9;
+      color: #111827;
+    }
+    .search-box {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-bottom: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f622;
+    }
+    #results {
+      margin-top: 14px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .result {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+    }
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .result-desc {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+    .result-link {
+      font-size: 13px;
+    }
+    .result-link a {
+      color: #2563eb;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .result-tags {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+    .tag-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #eff6ff;
+      margin-right: 4px;
+      margin-bottom: 2px;
+    }
+    .muted {
+      opacity: 0.6;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+  </style>
 </head>
 <body>
+  <div class="search-box">
+    <h1>Hello! Helper</h1>
+    <div class="subtitle">Type what you’re trying to do (e.g. “public link”, “embed card”, “filter requests”).</div>
+    <input id="query" placeholder="Search for help, features, or topics…" autocomplete="off" />
+    <div id="results" class="muted">Start typing to see results.</div>
+  </div>
 
-<div class="search-box">
-  <input id="query" placeholder="Search help, features, or topics…" />
-  <div id="results"></div>
-</div>
+  <script>
+    // -------------------------------------------------------------------
+    // 1. Knowledge Index (EDIT / EXTEND THIS WITH YOUR REAL CONTENT)
+    // -------------------------------------------------------------------
+    const knowledgeIndex = [
+      {
+        title: "Create a username and public profile link",
+        description: "How to set your Hello! username and generate a public link to your Signature Card.",
+        url: "https://example.com/help/create-username",
+        tags: ["username", "profile", "public link", "link", "url", "handle"]
+      },
+      {
+        title: "How LinkUp filters connection requests",
+        description: "Overview of the LinkUp workflow and how it filters spammy or low-intent inbound requests.",
+        url: "https://example.com/help/linkup-rules",
+        tags: ["linkup", "requests", "filter", "spam", "inbound", "workflow"]
+      },
+      {
+        title: "Embed your Signature Card on a website",
+        description: "Step-by-step guide to embedding your Signature Card using an iframe or HTML snippet.",
+        url: "https://example.com/help/embed-card",
+        tags: ["embed", "iframe", "website", "html", "install", "card"]
+      }
+    ];
 
-<script>
-// ===============================================================
-// Simple fallback keyword matcher (works even without embeddings)
-// ===============================================================
-function keywordMatch(query) {
-  const q = query.toLowerCase();
-  return knowledgeIndex.filter(entry =>
-    entry.text.toLowerCase().includes(q)
-  );
-}
+    // -------------------------------------------------------------------
+    // 2. Utility Functions: Tokenizing & Fuzzy Matching (Levenshtein)
+    // -------------------------------------------------------------------
+    function tokenize(text) {
+      return text
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean);
+    }
 
-document.getElementById("query").addEventListener("input", async e => {
-  const q = e.target.value.trim();
-  const results = document.getElementById("results");
-  if (!q) return (results.innerHTML = "");
+    // Levenshtein distance (edit distance) for fuzzy matching
+    function levenshtein(a, b) {
+      a = a.toLowerCase();
+      b = b.toLowerCase();
+      const m = a.length;
+      const n = b.length;
+      if (m === 0) return n;
+      if (n === 0) return m;
 
-  // FALLBACK FIRST — works instantly
-  let matches = keywordMatch(q);
+      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
 
-  // Optional: attempt semantic search if embeddings exist
-  if (!matches.length && embedder) {
-    const semantic = await semanticSearch(q);
-    if (semantic.length) matches = semantic;
-  }
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,       // deletion
+            dp[i][j - 1] + 1,       // insertion
+            dp[i - 1][j - 1] + cost // substitution
+          );
+        }
+      }
+      return dp[m][n];
+    }
 
-  if (!matches.length) {
-    results.innerHTML = `<div style="opacity:.6;">No results found</div>`;
-    return;
-  }
+    // Best fuzzy score between a term and any token in a text
+    function bestFuzzyScore(term, textTokens) {
+      let best = 0;
+      for (const token of textTokens) {
+        const dist = levenshtein(term, token);
+        if (dist === 0) {
+          // exact match
+          return 1.0;
+        }
+        if (dist === 1) {
+          best = Math.max(best, 0.75);
+        } else if (dist === 2) {
+          best = Math.max(best, 0.5);
+        }
+      }
+      return best;
+    }
 
-  results.innerHTML = matches
-    .map(m => `
-      <div class="result">
-        <a href="${m.url}" target="_blank">🔗 ${m.text}</a>
-      </div>
-    `).join("");
-});
-</script>
+    // -------------------------------------------------------------------
+    // 3. Scoring Function (AI-like multi-factor scoring)
+    // -------------------------------------------------------------------
+    function scoreEntry(query, entry) {
+      const queryTerms = tokenize(query);
+      if (!queryTerms.length) return 0;
+
+      const titleTokens = tokenize(entry.title || "");
+      const descTokens  = tokenize(entry.description || "");
+      const tagTokens   = tokenize((entry.tags || []).join(" "));
+
+      let score = 0;
+
+      for (const term of queryTerms) {
+        // Exact / substring matches
+        const inTitle = titleTokens.includes(term);
+        const inDesc  = descTokens.includes(term);
+        const inTags  = tagTokens.includes(term);
+
+        if (inTitle) score += 6;
+        if (inTags)  score += 5;
+        if (inDesc)  score += 3;
+
+        // Fuzzy matches (typos, close variants)
+        const fuzzyTitle = bestFuzzyScore(term, titleTokens);
+        const fuzzyTags  = bestFuzzyScore(term, tagTokens);
+        const fuzzyDesc  = bestFuzzyScore(term, descTokens);
+
+        score += fuzzyTitle * 4;
+        score += fuzzyTags  * 3;
+        score += fuzzyDesc  * 2;
+      }
+
+      // Small bonus if any tag exactly matches whole query
+      if ((entry.tags || []).some(tag => tag.toLowerCase() === query.toLowerCase())) {
+        score += 4;
+      }
+
+      return score;
+    }
+
+    function smartSearch(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+
+      const scored = knowledgeIndex.map(entry => ({
+        entry,
+        score: scoreEntry(q, entry)
+      }));
+
+      return scored
+        .filter(item => item.score > 0)     // only keep relevant
+        .sort((a, b) => b.score - a.score)  // highest score first
+        .map(item => item.entry);
+    }
+
+    // -------------------------------------------------------------------
+    // 4. UI Binding with Debounce
+    // -------------------------------------------------------------------
+    const inputEl = document.getElementById("query");
+    const resultsEl = document.getElementById("results");
+
+    let debounceTimer = null;
+
+    inputEl.addEventListener("input", () => {
+      const q = inputEl.value;
+
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        runSearch(q);
+      }, 160);
+    });
+
+    function runSearch(query) {
+      const trimmed = query.trim();
+      if (!trimmed) {
+        resultsEl.innerHTML = '<div class="muted">Start typing to see results.</div>';
+        return;
+      }
+
+      const matches = smartSearch(trimmed);
+
+      if (!matches.length) {
+        resultsEl.innerHTML = '<div class="muted">No results found. Try different words.</div>';
+        return;
+      }
+
+      resultsEl.innerHTML = matches
+        .map(m => {
+          const tagsHtml = (m.tags || [])
+            .map(t => `<span class="tag-pill">${t}</span>`)
+            .join(" ");
+
+          return `
+            <div class="result">
+              <div class="result-title">${m.title}</div>
+              <div class="result-desc">${m.description}</div>
+              <div class="result-link">
+                <a href="${m.url}" target="_blank">🔗 ${m.url}</a>
+              </div>
+              ${tagsHtml ? `<div class="result-tags">${tagsHtml}</div>` : ""}
+            </div>
+          `;
+        })
+        .join("");
+    }
+  </script>
 </body>
 </html>
