@@ -1,347 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hello! Helper</title>
-
+<title>Hello Helper AI</title>
 <style>
-  * { box-sizing: border-box; }
-
   body {
-    font-family: system-ui, sans-serif;
     margin: 0;
-    padding: 0;
-    background: transparent;
-    height: 100vh;
+    font-family: system-ui, sans-serif;
+    background: #f7f7f7;
     overflow: hidden;
   }
 
-  /* ===========================
-     MAIN HELPER (Expanded Mode)
-  ============================== */
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Full helper panel */
   #helper {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    width: 320px;
-    background: rgba(255,255,255,0.42);
-    backdrop-filter: blur(7px) saturate(180%);
-    -webkit-backdrop-filter: blur(7px) saturate(180%);
+    width: 350px;
+    max-width: 90vw;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
     border-radius: 18px;
     padding: 16px;
-    border: 1px solid rgba(255,255,255,0.35);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    transition: opacity 0.25s, transform 0.25s;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 10;
+  }
+  #helper.hidden {
+    display: none;
   }
 
-  .title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-  .subtitle { font-size: 12px; opacity:.65; margin-bottom: 10px; }
+  h1 {
+    margin: 0 0 10px;
+    font-size: 18px;
+  }
+
   input {
     width: 100%;
-    padding: 9px 11px;
+    padding: 10px;
     border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.15);
-    background: rgba(255,255,255,0.85);
     font-size: 14px;
-    outline: none;
-  }
-
-  .suggestions { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
-  .chip {
-    font-size:10px;
-    padding:5px 8px;
-    border-radius:5px;
-    cursor:pointer;
-    background:rgba(255,255,255,.65);
-    border:1px solid rgba(0,0,0,.1);
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
   }
 
   .result {
-    margin-top:8px;
-    padding:10px;
-    border-radius:9px;
-    border:1px solid rgba(0,0,0,.1);
-    background:rgba(255,255,255,.75);
-    font-size:12px;
-  }
-  .result-desc { font-size:11px; opacity:.8; }
-  .result-meta { font-size:10px; opacity:.6; margin-top:4px; }
-
-  a { color:#2563eb; text-decoration:none; font-size:11px; }
-
-  .empty { font-size:11px; opacity:.6; margin-top:8px; }
-
-  /* ===========================
-     Helper = Pill Mode
-  ============================== */
-  #pill {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    padding: 8px 14px;
-    font-size: 13px;
-    background: rgba(255,255,255,0.9);
-    border-radius: 999px;
-    border: 1px solid rgba(0,0,0,0.2);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 6px;
     cursor: pointer;
-    display: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    border: 1px solid #eee;
+    transition: background 0.15s;
+  }
+  .result:hover {
+    background: #f2f6ff;
   }
 
-  /* ===========================
-     Content Viewer
-  ============================== */
+  /* Full page content viewer */
   #viewer {
+    display: none;
     position: absolute;
     top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    border: 0;
+    width: 100%; height: 100%;
+    border: none;
+    background: white;
+    z-index: 1;
+  }
+  #viewer.visible {
+    display: block;
+  }
+
+  /* Floating pill button */
+  #pill {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 40px;
+    font-size: 14px;
+    cursor: pointer;
     display: none;
+    backdrop-filter: blur(10px);
+    z-index: 999999; /* Always on top */
+  }
+  #pill.visible {
+    display: inline-block;
   }
 </style>
 </head>
 
 <body>
-
-<!-- Full Helper UI -->
-<div id="helper">
-  <div class="title">Hello! Helper</div>
-  <div class="subtitle" id="statusText">Find answers quickly.</div>
-
-  <input id="query" placeholder="Search…" autocomplete="off"/>
-
-  <div class="suggestions">
-    <div class="chip" data-q="public link">Public Link</div>
-    <div class="chip" data-q="embed card">Embed Card</div>
-    <div class="chip" data-q="filter spam">Filter Requests</div>
+<div id="app">
+  <div id="helper">
+    <h1>Need Help?</h1>
+    <input id="search" placeholder="Type what you're trying to do..." autocomplete="off" />
+    <div id="results"></div>
+    <div id="status" style="opacity:0.6; font-size:12px; margin-top:8px;"></div>
   </div>
 
-  <div id="results" class="empty">Start typing or tap a suggestion.</div>
+  <iframe id="viewer"></iframe>
+  <div id="pill">Help ▸</div>
 </div>
 
-<!-- Pill Mode Button -->
-<div id="pill">🔍 Search</div>
-
-<!-- Embeddable Content Viewer -->
-<iframe id="viewer"></iframe>
-
-<!-- Transformers.js for local embeddings -->
 <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
 <script>
-// ====================================
-// Knowledge Data (edit URLs & text)
-// ====================================
-const knowledgeIndex = [
-  {
-    title: "Create a public link",
-    url: "https://view.genial.ly/EXAMPLE_1", // replace with real Genially URL
-    desc: "Generate the shareable Hello! link for your profile and control visibility.",
-    tags: ["public","link","profile","url","share","visibility"]
-  },
-  {
-    title: "Embed your Signature Card",
-    url: "https://view.genial.ly/EXAMPLE_2",
-    desc: "Add your Signature Card to a website or portfolio using iframe or HTML.",
-    tags: ["embed","iframe","html","card","website","install","publish"]
-  },
-  {
-    title: "Filter LinkUp requests",
-    url: "https://view.genial.ly/EXAMPLE_3",
-    desc: "Learn how Hello! filters spam, cold pitches, and low-intent connection requests.",
-    tags: ["filter","linkup","requests","spam","noise","connections"]
-  }
-];
 
-// ====================================
-// Fallback Keyword Search (backup)
-// ====================================
-function tokenize(t){ return t.toLowerCase().split(/\W+/).filter(Boolean); }
+// ============ CONFIG ==================
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
 
-function keywordScore(entry,q){
-  const qT = tokenize(q);
-  const eT = tokenize(entry.title + " " + entry.desc + " " + entry.tags.join(" "));
-  return qT.reduce((s,t)=>s+(eT.includes(t)?3:0),0);
-}
-
-function keywordSearch(q){
-  return knowledgeIndex
-    .map(e => ({ ...e, score: keywordScore(e,q) }))
-    .filter(e => e.score > 0)
-    .sort((a,b)=>b.score - a.score);
-}
-
-// ====================================
-// Local Embeddings with transformers.js
-// ====================================
+let knowledgeIndex = [];
+let embeddings = [];
 let embedder = null;
-let entryEmbeddings = null;
-let modelReady = false;
+let engineReady = false;
 
-const statusText = document.getElementById("statusText");
+// ============ LOAD SHEET CSV ==================
+async function loadKnowledgeIndex() {
+  const res = await fetch(SHEET_URL);
+  const csv = await res.text();
+  const rows = csv.trim().split("\n");
+  const headers = rows.shift().split(",");
 
-async function initEmbeddings() {
-  try {
-    statusText.textContent = "Loading AI search…";
-    const { pipeline } = window.transformers;
-    embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+  knowledgeIndex = rows.map(row => {
+    const values = row.split(",");
+    const entry = {};
+    headers.forEach((h, i) => entry[h.trim().toLowerCase()] = values[i]?.trim() || "");
 
-    // Precompute embeddings for each entry (title + desc + tags)
-    entryEmbeddings = [];
-    for (const entry of knowledgeIndex) {
-      const text = `${entry.title}. ${entry.desc}. ${entry.tags.join(" ")}`;
-      const output = await embedder(text, { pooling: "mean", normalize: true });
-      entryEmbeddings.push(Array.from(output.data));
-    }
+    return {
+      title: entry["title"],
+      url: entry["url"],
+      desc: entry["description"] || "",
+      tags: entry["tags"] ? entry["tags"].split(",").map(t => t.trim()) : [],
+      notes: entry["notes"] || ""
+    };
+  });
+}
 
-    modelReady = true;
-    statusText.textContent = "Find answers quickly.";
-  } catch (err) {
-    console.error("Error loading embeddings:", err);
-    statusText.textContent = "Search (AI fallback to keyword-only).";
-    modelReady = false;
+// ============ SEMANTIC ENGINE ==================
+async function loadEmbeddingEngine() {
+  const pipeline = await window.transformers.pipeline(
+    "feature-extraction",
+    "Xenova/all-MiniLM-L6-v2"
+  );
+  embedder = pipeline;
+
+  for (let item of knowledgeIndex) {
+    let vec = await embedder(item.title + " " + item.desc + " " + item.tags.join(" "));
+    embeddings.push({
+      ...item,
+      vector: vec.data[0]
+    });
   }
+
+  engineReady = true;
+  document.getElementById("status").innerText = "AI search ready ✔";
 }
 
 function cosineSimilarity(a, b) {
-  let s = 0;
-  for (let i=0; i<a.length; i++) s += a[i] * b[i];
-  return s;
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
-async function semanticSearch(q) {
-  if (!modelReady || !embedder || !entryEmbeddings) {
-    return [];
-  }
+async function semanticSearch(query) {
+  if (!engineReady) return keywordSearch(query);
+  let qv = await embedder(query);
+  qv = qv.data[0];
 
-  const output = await embedder(q, { pooling: "mean", normalize: true });
-  const qVec = Array.from(output.data);
-
-  const scored = knowledgeIndex.map((entry, idx) => ({
-    entry,
-    score: cosineSimilarity(qVec, entryEmbeddings[idx])
-  }));
-
-  // Threshold to ignore noise; tweak as needed
-  const MIN_SCORE = 0.25;
-
-  return scored
-    .filter(x => x.score >= MIN_SCORE)
-    .sort((a,b)=>b.score - a.score)
+  return embeddings
     .map(x => ({
-      ...x.entry,
-      semanticScore: x.score
-    }));
+      ...x,
+      score: cosineSimilarity(qv, x.vector)
+    }))
+    .sort((a,b)=>b.score-a.score);
 }
 
-// Combined smart search: semantic → keyword fallback
-async function smartSearch(q) {
-  q = q.trim();
-  if (!q) return [];
-
-  // 1) Try semantic if ready
-  let semanticResults = [];
-  if (modelReady) {
-    try {
-      semanticResults = await semanticSearch(q);
-    } catch (e) {
-      console.warn("Semantic search failed, falling back:", e);
-    }
-  }
-
-  if (semanticResults.length) {
-    return semanticResults;
-  }
-
-  // 2) Fallback to keyword search
-  const keywordResults = keywordSearch(q);
-  return keywordResults;
+function keywordSearch(query) {
+  return knowledgeIndex
+    .map(x => ({
+      ...x,
+      score: x.title.toLowerCase().includes(query.toLowerCase()) ? 1 : 0
+    }))
+    .sort((a,b)=>b.score-a.score);
 }
 
-// ====================================
-// UI: Viewer + Helper + Pill
-// ====================================
+// ============ UI INTERACTION ==================
+const searchInput = document.getElementById("search");
+const resultsDiv = document.getElementById("results");
+const viewer = document.getElementById("viewer");
 const helper = document.getElementById("helper");
 const pill = document.getElementById("pill");
-const viewer = document.getElementById("viewer");
-const input = document.getElementById("query");
-const results = document.getElementById("results");
 
-function openContent(url) {
-  viewer.src = url;
-  viewer.style.display = "block";
-  helper.style.display = "none";
-  pill.style.display = "block";
-}
-
-function showHelper() {
-  viewer.style.display = "none";
-  viewer.src = "";
-  helper.style.display = "block";
-  pill.style.display = "none";
-}
-
-pill.onclick = showHelper;
-
-// Render function
-function renderResults(list) {
-  if (!list.length) {
-    results.innerHTML = '<div class="empty">No results.</div>';
+searchInput.addEventListener("input", async () => {
+  const q = searchInput.value.trim();
+  if (!q) {
+    resultsDiv.innerHTML = "";
     return;
   }
 
-  results.innerHTML = list.map(e => `
-    <div class="result">
-      <strong>${e.title}</strong><br>
-      <span class="result-desc">${e.desc}</span><br>
-      <div class="result-meta">
-        ${e.semanticScore ? `AI match score: ${(e.semanticScore*100).toFixed(0)}%` : "Keyword match"}
-      </div>
-      <a href="#" data-url="${e.url}">Open</a>
+  const results = await semanticSearch(q);
+  resultsDiv.innerHTML = results.map(r => `
+    <div class="result" data-url="${r.url}">
+      <strong>${r.title}</strong><br>
+      <span>${r.desc}</span>
     </div>
   `).join("");
 
-  // Attach click handlers for "Open" links
-  document.querySelectorAll(".result a").forEach(link => {
-    link.addEventListener("click", ev => {
-      ev.preventDefault();
-      openContent(ev.target.dataset.url);
-    });
+  document.querySelectorAll(".result").forEach(el => {
+    el.addEventListener("click", () => showContent(el.dataset.url));
   });
+});
+
+function showContent(url) {
+  viewer.src = url;
+  viewer.classList.add("visible");
+  helper.classList.add("hidden");
+  pill.classList.add("visible");
 }
 
-// Debounced input handler
-let searchTimer = null;
-input.addEventListener("input", () => {
-  const q = input.value.trim();
-  if (searchTimer) clearTimeout(searchTimer);
-
-  if (!q) {
-    results.innerHTML = '<div class="empty">Start typing or tap a suggestion.</div>';
-    return;
-  }
-
-  searchTimer = setTimeout(async () => {
-    results.innerHTML = '<div class="empty">Searching…</div>';
-    const res = await smartSearch(q);
-    renderResults(res);
-  }, 150);
+pill.addEventListener("click", () => {
+  viewer.classList.remove("visible");
+  helper.classList.remove("hidden");
+  pill.classList.remove("visible");
+  viewer.src = "";
 });
 
-// Chips (quick search)
-document.querySelectorAll(".chip").forEach(chip => {
-  chip.addEventListener("click", () => {
-    const q = chip.dataset.q;
-    input.value = q;
-    input.dispatchEvent(new Event("input"));
-  });
-});
-
-// Initialize embeddings in the background
-initEmbeddings();
+// ============ INITIALIZE ==================
+(async function init() {
+  document.getElementById("status").innerText = "Loading help index...";
+  await loadKnowledgeIndex();
+  document.getElementById("status").innerText = "Loading AI model...";
+  await loadEmbeddingEngine();
+})();
 </script>
+
 </body>
 </html>
