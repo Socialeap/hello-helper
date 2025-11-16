@@ -4,188 +4,256 @@
 <meta charset="UTF-8" />
 <title>Hello! Helper – Smart Search</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+
 <style>
-  * { box-sizing: border-box; }
+/* ===================================================
+   ROOT & GLOBAL
+=================================================== */
+* { box-sizing: border-box; }
 
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    background: radial-gradient(circle at top left, #fdf2ff 0, #f5fbff 40%, #e0ecff 80%);
-    overflow: hidden;
-  }
+:root {
+  --card-bg: rgba(255, 255, 255, 0.22);
+  --card-border: rgba(255, 255, 255, 0.55);
+  --card-shadow: rgba(20, 25, 42, 0.40);
+  --text-base: #111;
+  --text-soft: rgba(0,0,0,0.55);
+  --blur-amount: 26px;
+  --chip-bg: rgba(255, 255, 255, 0.85);
+}
 
-  #app {
-    width: 100%;
-    height: 100vh;
-    position: relative;
+/* Dark mode support (matches system theme) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card-bg: rgba(25, 25, 30, 0.28);
+    --card-border: rgba(255,255,255,0.18);
+    --card-shadow: rgba(0,0,0,0.6);
+    --text-base: #f9fafb;
+    --text-soft: rgba(255,255,255,0.60);
+    --chip-bg: rgba(255,255,255,0.15);
   }
+}
 
-  /* --- Frosted Glass Helper UI --- */
-  #helper {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 440px; /* wider */
-    max-width: 92vw;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.24); /* real transparency */
-    border-radius: 22px;
-    padding: 18px 20px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    box-shadow: 0 18px 55px rgba(20, 25, 42, 0.40);
-    backdrop-filter: blur(26px) saturate(180%);
-    -webkit-backdrop-filter: blur(26px) saturate(180%);
-    color: #111;
-    z-index: 10;
-  }
-  #helper.hidden { display: none; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: radial-gradient(circle at top left, #fdf2ff 0, #eef7ff 45%, #e7eefe 75%);
+  overflow: hidden;
+  transition: background 0.4s ease;
+}
 
-  .title {
-    font-size: 19px; /* slightly smaller */
-    font-weight: 650;
-    margin-bottom: 4px;
-  }
+/* ===================================================
+   APP FRAME
+=================================================== */
+#app {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
 
-  .subtitle {
-    font-size: 13px;
-    opacity: 0.75;
-    margin-bottom: 12px;
-  }
+/* ===================================================
+   HELPER CARD (GLASS)
+=================================================== */
+#helper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 460px;
+  max-width: 92vw;
+  transform: translate(-50%, -50%);
+  background: var(--card-bg);
+  border-radius: 22px;
+  padding: 20px 22px 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 18px 55px var(--card-shadow);
+  backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+  color: var(--text-base);
+  z-index: 10;
+  opacity: 0;
+  transform-origin: center;
+  animation: fadeInScale 0.45s ease forwards;
+}
 
-  #search {
-    width: 100%;
-    padding: 9px 11px;
-    border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.6);
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.88);
-    outline: none;
-  }
+/* ✨ Smooth entrance animation */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.95); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 
-  #search:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
-  }
+#helper.hidden { display: none; }
 
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 10px 0 8px;
-  }
+/* ===================================================
+   HEADER TEXT
+=================================================== */
+.title {
+  font-size: 19px;
+  font-weight: 650;
+  margin-bottom: 4px;
+}
 
-  .chip {
-    padding: 4px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(148, 163, 184, 0.6);
-    cursor: pointer;
-    white-space: nowrap;
-  }
+.subtitle {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 12px;
+}
 
-  .chip:hover {
-    background: rgba(239, 246, 255, 0.95);
-  }
+/* ===================================================
+   SEARCH FIELD
+=================================================== */
+#search {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  outline: none;
+  transition: box-shadow 0.2s ease;
+}
 
-  #results {
-    max-height: 280px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
+#search:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
 
-  .result {
-    padding: 8px 9px;
-    background: rgba(255, 255, 255, 0.82);
-    border-radius: 10px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    transition: background 0.15s, transform 0.08s;
-  }
-  .result:hover {
-    background: #eff6ff;
-    transform: translateY(-1px);
-  }
+/* ===================================================
+   QUICK CHIPS
+=================================================== */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
 
-  .result-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 2px;
-  }
-  .result-desc {
-    font-size: 11px;
-    opacity: 0.82;
-    line-height: 1.3;
-  }
+.chip {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--chip-bg);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+.chip:hover { background: rgba(239, 246, 255, 0.95); transform: translateY(-1px); }
 
-  .empty {
-    font-size: 12px;
-    opacity: 0.7;
-    margin-top: 6px;
-  }
+/* ===================================================
+   RESULTS LIST
+=================================================== */
+#results {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+#results::-webkit-scrollbar {
+  width: 6px;
+}
+#results::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.18);
+  border-radius: 6px;
+}
 
-  #status {
-    font-size: 10px;
-    opacity: 0.65;
-    margin-top: 6px;
-  }
+.result {
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.80);
+  border-radius: 11px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.result:hover {
+  background: rgba(240,247,255,0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+}
 
-  /* --- Content Viewer with Header --- */
-  #viewer-wrap {
-    display: none;  
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    background: white;
-    display: flex;
-    flex-direction: column;
-  }
-  #viewer-wrap.visible {
-    display: flex;
-  }
+.result-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.result-desc {
+  font-size: 11px;
+  opacity: 0.82;
+  line-height: 1.3;
+}
 
-  #viewer-header {
-    width: 100%;
-    height: 42px;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding-right: 10px;
-  }
+/* Tag badges (new) */
+.badges {
+  margin-top: 3px;
+}
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 6px;
+  background: rgba(90,95,255,0.14);
+  color: #3b3f8f;
+}
 
-  #viewer {
-    flex: 1;
-    border: none;
-    width: 100%;
-  }
+/* ===================================================
+   VIEWER WITH HEADER
+=================================================== */
+#viewer-wrap {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  background: white;
+  z-index: 3;
+  animation: fadeIn 0.25s ease;
+}
+#viewer-wrap.visible { display: flex; }
 
-  /* Floating pill INSIDE header now */
-  #pill {
-    background: rgba(15, 23, 42, 0.88);
-    color: #f9fafb;
-    padding: 8px 13px;
-    border-radius: 999px;
-    font-size: 12px;
-    cursor: pointer;
-    display: none;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.45);
-  }
-  #pill.visible {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#viewer-header {
+  height: 46px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 12px;
+}
+
+#viewer {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: white;
+}
+
+/* ===================================================
+   FLOATING PILL (IN HEADER)
+=================================================== */
+#pill {
+  background: rgba(15, 23, 42, 0.85);
+  color: #f9fafb;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  display: none;
+  transition: transform 0.1s ease;
+}
+#pill.visible { display: inline-flex; }
+#pill:hover { transform: translateY(-1px); }
+
+.empty { font-size: 12px; opacity: 0.7; margin-top: 6px; }
+#status { font-size: 10px; opacity: 0.65; margin-top: 6px; }
 </style>
 </head>
 
 <body>
 <div id="app">
+
   <!-- SEARCH PANEL -->
   <div id="helper">
     <div class="title">Hello! Helper</div>
@@ -210,23 +278,28 @@
     </div>
     <iframe id="viewer"></iframe>
   </div>
+
 </div>
 
 <script>
-/* SAME JS AS PREVIOUS VERSION — only UI changed */
+/* ===================================================
+   CORE CONFIG
+=================================================== */
 const SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyssmgugx1VUcyPbrjiOul67XjNNbFp45EIBinkDhqO-MK52t0qks5bbEoudn1bVtwuz5TyA_OaChW/pub?output=csv";
 
 let knowledgeIndex = [];
 let indexLoaded = false;
-const searchInput = document.getElementById("search");
-const resultsDiv = document.getElementById("results");
-const helper = document.getElementById("helper");
-const statusEl = document.getElementById("status");
-const viewerWrap = document.getElementById("viewer-wrap");
-const viewer = document.getElementById("viewer");
-const pill = document.getElementById("pill");
 
+/* Analytics (local only) */
+const analytics = {
+  searches: [],
+  clicks: [],
+};
+
+/* ===================================================
+   UTILS
+=================================================== */
 function tokenize(text) {
   return text.toLowerCase().split(/[^a-z0-9]+/g).filter(Boolean);
 }
@@ -234,11 +307,10 @@ function tokenize(text) {
 const SYNONYMS = {
   spam: ["noise", "unwanted", "junk", "cold", "salesy", "unsolicited"],
   public: ["visible", "everyone", "open", "shareable"],
-  share: ["send", "distribute", "copy", "forward"],
-  embed: ["iframe", "website", "paste", "integrate", "install"],
-  filter: ["screen", "gate", "approve", "qualify", "block"],
+  share: ["send", "distribute", "copy"],
+  embed: ["iframe", "website", "paste", "integrate"],
+  filter: ["screen", "gate", "approve", "block"],
   request: ["inquiry", "message", "contact"],
-  profile: ["card", "page", "presence"],
   link: ["url", "address"],
   qr: ["scan", "code"],
 };
@@ -251,27 +323,31 @@ function getSynonyms(token) {
   return [...out];
 }
 
+/* ===================================================
+   LOAD SHEET
+=================================================== */
 async function loadSheet() {
   const res = await fetch(SHEET_URL);
   const text = await res.text();
-  const rows = text.trim().split("\n");
-  rows.shift(); // remove header
-  knowledgeIndex = rows.map(r => {
-    const [title, url, desc, tags, notes] = r.split(",");
-    const text = `${title} ${desc} ${tags} ${notes} `.toLowerCase();
+  const lines = text.trim().split("\n");
+  lines.shift(); // remove headers
+
+  knowledgeIndex = lines.map(row => {
+    const [title, url, desc, tags, notes] = row.split(",");
+    const full = `${title} ${desc} ${tags} ${notes}`.toLowerCase();
     return {
-      title,
-      url,
-      desc,
-      tags,
-      notes,
-      _text: text,
-      _tokens: new Set(tokenize(text)),
+      title, url, desc,
+      tags: tags?.split(",").map(t => t.trim()) ?? [],
+      _text: full,
+      _tokens: new Set(tokenize(full)),
     };
   });
   indexLoaded = true;
 }
 
+/* ===================================================
+   SMART SEARCH
+=================================================== */
 function score(entry, q) {
   let s = 0;
   const full = q.toLowerCase();
@@ -285,31 +361,52 @@ function score(entry, q) {
 }
 
 async function search(q) {
-  if (!indexLoaded || q.trim().length < 2) return [];
+  if (!indexLoaded || q.length < 2) return [];
+  analytics.searches.push({ q, ts: Date.now() });
+
   return knowledgeIndex
     .map(e => ({ e, s: score(e, q) }))
     .filter(x => x.s > 0)
-    .sort((a, b) => b.s - a.s)
-    .map(x => x.e);
+    .sort((a,b)=>b.s-a.s)
+    .map(x=>x.e);
 }
 
+/* ===================================================
+   UI + INTERACTION
+=================================================== */
+const searchInput = document.getElementById("search");
+const resultsDiv = document.getElementById("results");
+const statusEl = document.getElementById("status");
+const viewerWrap = document.getElementById("viewer-wrap");
+const viewer = document.getElementById("viewer");
+const helper = document.getElementById("helper");
+const pill = document.getElementById("pill");
+
 searchInput.addEventListener("input", async () => {
-  const q = searchInput.value;
-  if (!q.trim()) {
+  const q = searchInput.value.trim();
+  if (!q) {
     resultsDiv.innerHTML = "Start typing or tap a suggestion.";
     return;
   }
   resultsDiv.innerHTML = `<div class="empty">Searching…</div>`;
   const results = await search(q);
+
   if (!results.length) {
     resultsDiv.innerHTML = `<div class="empty">No results found.</div>`;
     return;
   }
-  resultsDiv.innerHTML = results.map(r => `
-    <div class="result" data-url="${r.url}">
-      <div class="result-title">${r.title}</div>
-      <div class="result-desc">${r.desc}</div>
-    </div>`).join("");
+
+  resultsDiv.innerHTML =
+    results.map(r => `
+      <div class="result" data-url="${r.url}">
+        <div class="result-title">${r.title}</div>
+        <div class="result-desc">${r.desc}</div>
+        ${r.tags?.length ? `
+          <div class="badges">
+            ${r.tags.map(t => `<span class="badge">${t}</span>`).join("")}
+          </div>` : ""}
+      </div>
+    `).join("");
 
   document.querySelectorAll(".result").forEach(el =>
     el.onclick = () => openContent(el.dataset.url)
@@ -324,6 +421,8 @@ document.querySelectorAll(".chip").forEach(el =>
 );
 
 function openContent(url) {
+  analytics.clicks.push({ url, ts: Date.now() });
+
   viewer.src = url;
   viewerWrap.classList.add("visible");
   helper.classList.add("hidden");
